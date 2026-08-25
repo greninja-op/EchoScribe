@@ -3,45 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flow Pro | AI Voice Dictation & Intelligence</title>
+  <title>Flow Pro System 7 | Skeuomorphic Voice Dictation & Intelligence</title>
   <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
-<body>
+<body class="mac-os-mode">
   <div class="app-window">
-    <!-- Window Top Header -->
+    <!-- Window Top Header Bar with Skeuomorphic Stripes -->
     <header class="window-topbar">
       <div class="topbar-left">
-        <button class="icon-btn" title="Toggle Sidebar">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="18" height="18" x="3" y="3" rx="2" />
-            <path d="M9 3v18" />
-          </svg>
-        </button>
-        <button class="icon-btn" title="User Profile">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <circle cx="12" cy="10" r="3" />
-            <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
-          </svg>
-        </button>
+        <div class="mac-traffic-lights">
+          <span class="mac-traffic-btn mac-traffic-close"></span>
+          <span class="mac-traffic-btn mac-traffic-minimize"></span>
+          <span class="mac-traffic-btn mac-traffic-expand"></span>
+        </div>
       </div>
 
+      <div class="topbar-stripes"></div>
+
       <div class="topbar-right">
-        <button class="icon-btn" title="Notifications">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-          </svg>
-        </button>
-        <div class="window-controls">
-          <span class="win-ctl">─</span>
-          <span class="win-ctl">□</span>
-          <span class="win-ctl">✕</span>
-        </div>
+        <div class="topbar-pill" id="macClock">12:00 PM</div>
+        <div class="topbar-pill" style="background: var(--mac-lime);">Flow Pro v2.0</div>
       </div>
     </header>
 
-    <!-- Body Layout -->
+    <!-- Main Body Layout -->
     <div class="app-body">
       <!-- Sidebar -->
       <aside class="app-sidebar">
@@ -107,7 +92,7 @@
           </a>
           <a class="nav-item" href="/docs" target="_blank">
             <span class="nav-icon">❓</span>
-            <span>Help & API Docs</span>
+            <span>Help & API</span>
           </a>
         </div>
       </aside>
@@ -127,8 +112,9 @@
               <p>Set up different writing styles for different apps.</p>
               <button class="btn-pill-white" onclick="switchView('view-style')">Start now</button>
             </div>
-            <div class="hero-image-wrap">
-              <div style="background: linear-gradient(45deg, #d97706, #ec4899, #6366f1); width: 100%; height: 100%; filter: blur(20px); border-radius: 12px;"></div>
+            <div class="hero-image-badge">
+              <span style="font-size: 2.2rem;">✨🎙️✨</span>
+              <div style="font-size: 1.15rem; font-weight: 800;">10K Adaptive AI</div>
             </div>
           </div>
 
@@ -140,12 +126,12 @@
               </button>
               <div class="mic-meta">
                 <span id="micStatusText" class="mic-title">Ready to dictate</span>
-                <span class="mic-shortcut-hint">Hold <kbd style="background: #E5E7EB; padding: 2px 6px; border-radius: 4px; font-weight: 700;">Space</kbd> or click to record</span>
+                <span class="mic-shortcut-hint">Hold <kbd style="background: #000; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 700;">Space</kbd> or click to record</span>
               </div>
             </div>
 
             <div class="tone-pills-row">
-              <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); margin-right: 4px;">TONE:</span>
+              <span style="font-size: 1.15rem; font-weight: 800; color: #000; margin-right: 4px;">TONE:</span>
               <button class="tone-pill-btn active" data-tone="clean">Clean & Fluid</button>
               <button class="tone-pill-btn" data-tone="professional">Professional</button>
               <button class="tone-pill-btn" data-tone="casual">Casual</button>
@@ -161,7 +147,7 @@
             <div class="feed-container">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span class="feed-date-header">TODAY</span>
-                <span id="liveLatencyTag" style="font-size: 0.82rem; font-weight: 700; color: var(--accent-teal);">⚡ Latency: 120ms</span>
+                <span id="liveLatencyTag" class="topbar-pill" style="background: var(--mac-lime); font-size: 1.05rem;">⚡ Latency: 120ms</span>
               </div>
 
               <!-- Stream Timeline List -->
@@ -192,13 +178,13 @@
                   <div class="vp-title">Voice Profile</div>
                   <div class="vp-badge" id="vpBadgeName">Protocol Investigator</div>
                 </div>
-                <span style="font-size: 2rem;">🧑‍💻</span>
+                <span style="font-size: 2.2rem;">🧑‍💻</span>
               </div>
             </div>
           </div>
         </section>
 
-        <!-- VIEW 2: INSIGHTS (Exact match to Wispr Flow screenshot) -->
+        <!-- VIEW 2: INSIGHTS (Exact match to Wispr Flow layout in Skeuomorphic Style) -->
         <section id="view-insights" class="view-pane">
           <div class="view-header">
             <div>
@@ -217,7 +203,7 @@
             <div class="metric-card-box">
               <div>
                 <span class="metric-header-title">WORDS PER MINUTE ⓘ</span>
-                <div style="font-size: 2.2rem; font-weight: 800; margin-top: 4px;" id="insightsWpm">85</div>
+                <div style="font-size: 2.8rem; font-weight: 800; margin-top: 4px;" id="insightsWpm">85</div>
               </div>
               <div class="speedometer-wrap">
                 <canvas id="gaugeCanvas" width="140" height="70" class="gauge-canvas"></canvas>
@@ -229,7 +215,7 @@
             <div class="metric-card-box">
               <div>
                 <span class="metric-header-title">FIXES MADE BY FLOW</span>
-                <div style="font-size: 2.2rem; font-weight: 800; margin-top: 4px;" id="insightsTotalFixes">2,163</div>
+                <div style="font-size: 2.8rem; font-weight: 800; margin-top: 4px;" id="insightsTotalFixes">2,163</div>
               </div>
               <div class="fixes-breakdown">
                 <div class="fixes-row">
@@ -245,7 +231,7 @@
             <div class="metric-card-box">
               <div>
                 <span class="metric-header-title">TOTAL WORDS DICTATED</span>
-                <div style="font-size: 2.2rem; font-weight: 800; margin-top: 4px;" id="insightsTotalWords">15,470</div>
+                <div style="font-size: 2.8rem; font-weight: 800; margin-top: 4px;" id="insightsTotalWords">15,470</div>
               </div>
               <div>
                 <div class="dr-seuss-quote" id="drSeussQuote">You've written 1 Dr. Seuss book!</div>
@@ -262,8 +248,8 @@
             <!-- Desktop Usage List -->
             <div class="metric-card-box">
               <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <h3 style="font-size: 1.25rem; font-weight: 800;">Desktop usage</h3>
-                <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted);">TOTAL APPS USED | 13</span>
+                <h3 style="font-size: 1.6rem; font-weight: 800;">Desktop usage</h3>
+                <span style="font-size: 1.05rem; font-weight: 800; color: #444;">TOTAL APPS USED | 13</span>
               </div>
 
               <div class="app-usage-list">
@@ -274,22 +260,22 @@
                 </div>
                 <div class="usage-bar-item">
                   <span class="usage-icon">♾️</span>
-                  <div class="usage-bar-track" style="width: 25%; background: var(--accent-mint);">15%</div>
+                  <div class="usage-bar-track" style="width: 25%; background: var(--mac-cyan);">15%</div>
                   <span class="usage-label">20 OTHER TASKS</span>
                 </div>
                 <div class="usage-bar-item">
                   <span class="usage-icon">📄</span>
-                  <div class="usage-bar-track" style="width: 15%; background: #64748B;">9%</div>
+                  <div class="usage-bar-track" style="width: 15%; background: var(--mac-yellow);">9%</div>
                   <span class="usage-label">1 DOCUMENTS</span>
                 </div>
                 <div class="usage-bar-item">
                   <span class="usage-icon">✉️</span>
-                  <div class="usage-bar-track" style="width: 8%; background: #CBD5E1; color: #333;">0%</div>
+                  <div class="usage-bar-track" style="width: 8%; background: #ddd; color: #000;">0%</div>
                   <span class="usage-label">0 EMAILS</span>
                 </div>
                 <div class="usage-bar-item">
                   <span class="usage-icon">💬</span>
-                  <div class="usage-bar-track" style="width: 8%; background: #CBD5E1; color: #333;">0%</div>
+                  <div class="usage-bar-track" style="width: 8%; background: #ddd; color: #000;">0%</div>
                   <span class="usage-label">0 WORK MESSAGES</span>
                 </div>
               </div>
@@ -298,11 +284,11 @@
             <!-- 1 Day Streak Heatmap -->
             <div class="metric-card-box heatmap-card">
               <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <h3 style="font-size: 1.25rem; font-weight: 800;" id="streakTitle">1 day streak</h3>
-                <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted);">LONGEST STREAK | 4 DAYS</span>
+                <h3 style="font-size: 1.6rem; font-weight: 800;" id="streakTitle">1 day streak</h3>
+                <span style="font-size: 1.05rem; font-weight: 800; color: #444;">LONGEST STREAK | 4 DAYS</span>
               </div>
 
-              <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem;">
+              <div style="display: flex; justify-content: space-between; font-size: 1.15rem; font-weight: 800; color: #000; margin-top: 0.75rem;">
                 <span>May</span>
                 <span>Jun</span>
                 <span>Jul</span>
@@ -313,12 +299,12 @@
                 <!-- Dynamically generated heat cells -->
               </div>
 
-              <div style="display: flex; justify-content: flex-end; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem;">
+              <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px; font-size: 1.05rem; font-weight: 800; margin-top: 0.75rem;">
                 <span>Less</span>
-                <span class="heat-cell" style="width: 10px; height: 10px;"></span>
-                <span class="heat-cell l1" style="width: 10px; height: 10px;"></span>
-                <span class="heat-cell l2" style="width: 10px; height: 10px;"></span>
-                <span class="heat-cell l4" style="width: 10px; height: 10px;"></span>
+                <span class="heat-cell" style="width: 12px; height: 12px;"></span>
+                <span class="heat-cell l1" style="width: 12px; height: 12px;"></span>
+                <span class="heat-cell l2" style="width: 12px; height: 12px;"></span>
+                <span class="heat-cell l4" style="width: 12px; height: 12px;"></span>
                 <span>More</span>
               </div>
             </div>
@@ -330,14 +316,14 @@
           <div class="view-header">
             <div>
               <h1 class="view-title">Dictionary</h1>
-              <p style="color: var(--text-secondary); font-size: 0.95rem;">Teach Flow company names, acronyms, and coding terms.</p>
+              <p style="color: #444; font-size: 1.25rem;">Teach Flow company names, acronyms, and coding terms.</p>
             </div>
           </div>
 
           <div class="dict-toolbar">
             <input type="text" id="addPhraseInput" class="dict-input" placeholder="Spoken phrase (e.g. fast api)" />
             <input type="text" id="addReplInput" class="dict-input" placeholder="Replacement (e.g. FastAPI)" />
-            <select id="addCatSelect" class="dict-input" style="max-width: 140px;">
+            <select id="addCatSelect" class="dict-input" style="max-width: 140px; font-weight: 700;">
               <option value="code">Code</option>
               <option value="tech">Tech</option>
               <option value="names">Names</option>
@@ -368,7 +354,7 @@
           <div class="view-header">
             <div>
               <h1 class="view-title">Snippets</h1>
-              <p style="color: var(--text-secondary); font-size: 0.95rem;">Voice shortcuts expanded automatically as you dictate.</p>
+              <p style="color: #444; font-size: 1.25rem;">Voice shortcuts expanded automatically as you dictate.</p>
             </div>
           </div>
 
@@ -397,18 +383,18 @@
           <div class="view-header">
             <div>
               <h1 class="view-title">Voice Style & Personal Twin</h1>
-              <p style="color: var(--text-secondary); font-size: 0.95rem;">10K Word Milestone AI Adaptation and Custom Profiles.</p>
+              <p style="color: #444; font-size: 1.25rem;">10K Word Milestone AI Adaptation and Custom Profiles.</p>
             </div>
           </div>
 
           <div class="metric-card-box">
-            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem;">Adaptive Intent Reasoning (10K+ Words)</h3>
-            <p style="font-size: 0.92rem; color: var(--text-secondary); line-height: 1.5;" id="intentExplanationText">
+            <h3 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem;">Adaptive Intent Reasoning (10K+ Words)</h3>
+            <p style="font-size: 1.25rem; color: #222; line-height: 1.4;" id="intentExplanationText">
               When enabled, Flow reads implicit cues in your speech to automatically structure code functions, pull request commit messages, and checklist items.
             </p>
             <div style="margin-top: 1rem; display: flex; gap: 12px; align-items: center;">
-              <span class="category-tag" id="adaptiveStatusTag" style="font-size: 0.9rem; padding: 4px 12px;">ACTIVE: Gold 10K Unlocked</span>
-              <button class="btn-teal" id="toggle10kBtn" style="background: var(--accent-mint);">⚡ Simulate 10K+ Words</button>
+              <span class="category-tag" id="adaptiveStatusTag" style="font-size: 1.15rem; padding: 4px 12px; background: var(--mac-lime);">ACTIVE: Gold 10K Unlocked</span>
+              <button class="btn-teal" id="toggle10kBtn" style="background: var(--mac-yellow);">⚡ Simulate 10K+ Words</button>
             </div>
           </div>
         </section>
@@ -418,10 +404,10 @@
           <div class="view-header">
             <div>
               <h1 class="view-title">Scratchpad</h1>
-              <p style="color: var(--text-secondary); font-size: 0.95rem;">Dictate ideas, test formatting, or export notes.</p>
+              <p style="color: #444; font-size: 1.25rem;">Dictate ideas, test formatting, or export notes.</p>
             </div>
           </div>
-          <textarea id="scratchpadArea" style="width: 100%; height: 350px; border-radius: var(--radius-lg); border: 1px solid var(--border-card); padding: 1.25rem; font-family: inherit; font-size: 1rem; line-height: 1.6; outline: none;" placeholder="Start speaking or type here..."></textarea>
+          <textarea id="scratchpadArea" style="width: 100%; height: 350px; border-radius: 8px; border: 2px solid #000000; padding: 1.25rem; font-family: var(--font-mac-title); font-size: 1.35rem; line-height: 1.4; outline: none; box-shadow: var(--mac-shadow-sm);" placeholder="Start speaking or type here..."></textarea>
         </section>
       </main>
     </div>
