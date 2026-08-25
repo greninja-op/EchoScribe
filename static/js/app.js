@@ -1,5 +1,5 @@
 /**
- * Wispr Flow Pro - Client Application Controller
+ * Flow Pro Modular Synthesizer Controller
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -8,6 +8,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let isRecording = false;
   let mediaRecorder = null;
   let audioChunks = [];
+  let audioCtx = null;
+  let analyser = null;
+  let animFrameId = null;
+
   let cachedDictionary = {};
   let cachedSnippets = {};
   let cachedStats = {};
@@ -27,8 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
   ];
 
   // DOM Elements - Navigation
-  const navItems = document.querySelectorAll(".nav-item[data-view]");
-  const viewPanes = document.querySelectorAll(".view-pane");
+  const navBtns = document.querySelectorAll(".synth-nav-btn[data-view]");
+  const viewPanes = document.querySelectorAll(".synth-view");
 
   // DOM Elements - Dictation
   const mainMicBtn = document.getElementById("mainMicBtn");
@@ -39,6 +43,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const sideWpm = document.getElementById("sideWpm");
   const sideStreak = document.getElementById("sideStreak");
   const vpBadgeName = document.getElementById("vpBadgeName");
+  const liveClockPill = document.getElementById("liveClockPill");
+  const oscCanvas = document.getElementById("oscilloscopeCanvas");
 
   // DOM Elements - Insights
   const insightsWpm = document.getElementById("insightsWpm");
@@ -62,11 +68,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const toggle10kBtn = document.getElementById("toggle10kBtn");
   const adaptiveStatusTag = document.getElementById("adaptiveStatusTag");
 
+  // Clock Ticker
+  function updateClock() {
+    if (liveClockPill) {
+      const now = new Date();
+      liveClockPill.textContent = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    }
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
   // 1. Navigation View Switcher
   window.switchView = (viewId) => {
-    navItems.forEach((item) => {
-      if (item.dataset.view === viewId) item.classList.add("active");
-      else item.classList.remove("active");
+    navBtns.forEach((btn) => {
+      if (btn.dataset.view === viewId) btn.classList.add("active");
+      else btn.classList.remove("active");
     });
 
     viewPanes.forEach((pane) => {
@@ -80,22 +96,86 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  navItems.forEach((item) => {
-    item.addEventListener("click", () => {
-      if (item.dataset.view) switchView(item.dataset.view);
+  navBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (btn.dataset.view) switchView(btn.dataset.view);
     });
   });
 
-  // 2. Tone Selector
-  document.querySelectorAll(".tone-pill-btn").forEach((btn) => {
+  // 2. Tone Selector Keys
+  document.querySelectorAll(".tone-key-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".tone-pill-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".tone-key-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       currentTone = btn.dataset.tone;
     });
   });
 
-  // 3. Audio Recording Engine
+  // 3. Audio Recording Engine & Live CRT Oscilloscope
+  function startOscilloscope(stream) {
+    if (!oscCanvas) return;
+    const ctx = oscCanvas.getContext("2d");
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    source.connect(analyser);
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    function draw() {
+      animFrameId = requestAnimationFrame(draw);
+      analyser.getByteTimeDomainData(dataArray);
+
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, oscCanvas.width, oscCanvas.height);
+
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#98FF44";
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = "#98FF44";
+
+      ctx.beginPath();
+      const sliceWidth = (oscCanvas.width * 1.0) / bufferLength;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = (v * oscCanvas.height) / 2;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+        x += sliceWidth;
+      }
+
+      ctx.lineTo(oscCanvas.width, oscCanvas.height / 2);
+      ctx.stroke();
+    }
+
+    draw();
+  }
+
+  function stopOscilloscope() {
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+    if (audioCtx) {
+      audioCtx.close();
+      audioCtx = null;
+    }
+    if (oscCanvas) {
+      const ctx = oscCanvas.getContext("2d");
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, oscCanvas.width, oscCanvas.height);
+      ctx.strokeStyle = "#98FF44";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, oscCanvas.height / 2);
+      ctx.lineTo(oscCanvas.width, oscCanvas.height / 2);
+      ctx.stroke();
+    }
+  }
+
+  stopOscilloscope(); // draw resting flat line
+
   async function startRecording() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -107,17 +187,19 @@ document.addEventListener("DOMContentLoaded", () => {
       };
 
       mediaRecorder.onstop = async () => {
+        stopOscilloscope();
         const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
         await sendAudioPayload(audioBlob);
         stream.getTracks().forEach((t) => t.stop());
       };
 
+      startOscilloscope(stream);
       mediaRecorder.start();
       isRecording = true;
       mainMicBtn.classList.add("recording");
-      micStatusText.textContent = "Listening... Release to transcribe";
+      micStatusText.textContent = "LISTENING... RELEASE PAD TO TRANSCRIBE";
     } catch (e) {
-      alert("Microphone access is required for dictation.");
+      alert("Microphone access required for audio transcription.");
     }
   }
 
@@ -126,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
       mediaRecorder.stop();
       isRecording = false;
       mainMicBtn.classList.remove("recording");
-      micStatusText.textContent = "Transcribing with Flow AI...";
+      micStatusText.textContent = "SYNTHESIZING WITH FLOW AI...";
     }
   }
 
@@ -135,7 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
     else stopRecording();
   });
 
-  // Keyboard Spacebar Shortcut
+  // Spacebar Hotkey
   window.addEventListener("keydown", (e) => {
     if (e.code === "Space" && !isRecording && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
       e.preventDefault();
@@ -150,7 +232,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // 4. Send Audio Payload to EchoScribe / Wispr Flow Server
+  // 4. Send Audio Payload to EchoScribe API
   async function sendAudioPayload(blob) {
     const formData = new FormData();
     formData.append("file", blob, "recording.wav");
@@ -165,10 +247,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (res.ok) {
         const data = await res.json();
-        liveLatencyTag.textContent = `⚡ Latency: ${data.latency_ms || latency}ms`;
-        micStatusText.textContent = "Ready to dictate";
+        liveLatencyTag.textContent = `⚡ LATENCY: ${data.latency_ms || latency}ms`;
+        micStatusText.textContent = "READY TO DICTATE";
 
-        // Add to Timeline Feed
         const now = new Date();
         const timeStr = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).toLowerCase();
 
@@ -182,25 +263,24 @@ document.addEventListener("DOMContentLoaded", () => {
         await fetchStats();
       }
     } catch (e) {
-      micStatusText.textContent = "Error connecting to server";
+      micStatusText.textContent = "SERVER CONNECTION ERROR";
     }
   }
 
   // 5. Render Timeline Feed
   function renderTimelineFeed() {
     dictationTimelineList.innerHTML = "";
-    timelineItems.forEach((item, idx) => {
+    timelineItems.forEach((item) => {
       const card = document.createElement("div");
-      card.className = "feed-item-card";
+      card.className = "feed-synth-card";
       card.innerHTML = `
-        <div class="feed-timestamp">${item.time}</div>
-        <div class="feed-body">
-          <div class="feed-text">${escapeHtml(item.text)}</div>
-          <div class="feed-actions">
-            <button class="feed-action-btn" title="Play Audio">▷</button>
-            <button class="feed-action-btn copy-item-btn" data-text="${escapeHtml(item.text)}" title="Copy to clipboard">⧉</button>
-            <button class="feed-action-btn" title="Flag feedback">⚐</button>
-            <button class="feed-action-btn" title="More options">⋮</button>
+        <div class="synth-timestamp-badge">${item.time}</div>
+        <div class="feed-synth-body">
+          <div class="feed-synth-text">${escapeHtml(item.text)}</div>
+          <div class="feed-synth-controls">
+            <button class="synth-ctrl-btn" title="Play Audio">▷ Play</button>
+            <button class="synth-ctrl-btn copy-item-btn" data-text="${escapeHtml(item.text)}" title="Copy to clipboard">⧉ Copy</button>
+            <button class="synth-ctrl-btn" title="Flag feedback">⚐ Flag</button>
           </div>
         </div>
       `;
@@ -208,10 +288,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.querySelectorAll(".copy-item-btn").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
+      btn.addEventListener("click", () => {
         navigator.clipboard.writeText(btn.dataset.text);
-        btn.textContent = "✓";
-        setTimeout(() => (btn.textContent = "⧉"), 1500);
+        btn.textContent = "✓ Copied";
+        setTimeout(() => (btn.textContent = "⧉ Copy"), 1500);
       });
     });
   }
@@ -226,18 +306,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const centerY = gaugeCanvas.height;
     const radius = 55;
 
-    // Track
+    // Outer Background Track
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, Math.PI, 2 * Math.PI, false);
     ctx.lineWidth = 14;
-    ctx.strokeStyle = "#E5E7EB";
+    ctx.strokeStyle = "#232532";
     ctx.stroke();
 
-    // Filled Active Arc
+    // Active Neon Arc
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, Math.PI, Math.PI + Math.PI * 0.75, false);
     ctx.lineWidth = 14;
-    ctx.strokeStyle = "#0E4B49";
+    ctx.strokeStyle = "#98FF44";
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = "#98FF44";
     ctx.lineCap = "round";
     ctx.stroke();
   }
@@ -245,14 +327,14 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderHeatmap() {
     if (!streakHeatmapGrid) return;
     streakHeatmapGrid.innerHTML = "";
-    // Generate 64 cells representing May-Aug activity
     for (let i = 0; i < 64; i++) {
       const cell = document.createElement("div");
-      cell.className = "heat-cell";
-      if (i > 52) {
+      cell.className = "seq-cell";
+      if (i > 50) {
         const rand = Math.random();
-        if (rand > 0.6) cell.classList.add("l4");
-        else if (rand > 0.3) cell.classList.add("l2");
+        if (rand > 0.75) cell.classList.add("l4");
+        else if (rand > 0.5) cell.classList.add("l3");
+        else if (rand > 0.25) cell.classList.add("l2");
         else cell.classList.add("l1");
       }
       streakHeatmapGrid.appendChild(cell);
@@ -277,7 +359,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (stats.total_words >= 10000) {
           if (drSeussQuote) drSeussQuote.textContent = "You've written 1 Dr. Seuss book! (10K+ Unlocked)";
-          if (vpBadgeName) vpBadgeName.textContent = "Protocol Investigator (Gold)";
+          if (vpBadgeName) vpBadgeName.textContent = "Protocol Investigator (Gold 10K)";
           if (adaptiveStatusTag) adaptiveStatusTag.textContent = "ACTIVE: Gold 10K+ Unlocked";
         }
       }
@@ -329,10 +411,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><strong>${escapeHtml(phrase)}</strong></td>
-        <td><code style="font-family: var(--font-mono); color: var(--accent-teal);">${escapeHtml(repl)}</code></td>
-        <td><span class="category-tag">${escapeHtml(cat)}</span></td>
-        <td><button class="btn-delete-row delete-word-btn" data-phrase="${escapeHtml(phrase)}">✕</button></td>
+        <td><strong style="color: #FFFFFF;">${escapeHtml(phrase)}</strong></td>
+        <td><code style="font-family: var(--font-mono); color: var(--synth-lime);">${escapeHtml(repl)}</code></td>
+        <td><span class="synth-cat-tag">${escapeHtml(cat)}</span></td>
+        <td><button class="synth-ctrl-btn delete-word-btn" style="background: var(--synth-pink); color: #fff;" data-phrase="${escapeHtml(phrase)}">✕</button></td>
       `;
       flowDictTableBody.appendChild(tr);
     });
@@ -351,9 +433,9 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.entries(cachedSnippets).forEach(([trigger, expansion]) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><strong style="color: var(--accent-teal);">${escapeHtml(trigger)}</strong></td>
-        <td style="font-size: 0.88rem; color: var(--text-secondary);">${escapeHtml(expansion.slice(0, 50))}${expansion.length > 50 ? "..." : ""}</td>
-        <td><button class="btn-delete-row delete-snip-btn" data-trigger="${escapeHtml(trigger)}">✕</button></td>
+        <td><strong style="color: var(--synth-lime); font-family: var(--font-mono);">${escapeHtml(trigger)}</strong></td>
+        <td style="font-size: 0.92rem; color: #D1D5DB;">${escapeHtml(expansion.slice(0, 50))}${expansion.length > 50 ? "..." : ""}</td>
+        <td><button class="synth-ctrl-btn delete-snip-btn" style="background: var(--synth-pink); color: #fff;" data-trigger="${escapeHtml(trigger)}">✕</button></td>
       `;
       flowSnipTableBody.appendChild(tr);
     });
@@ -415,7 +497,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })[m]);
   }
 
-  // Initialize
+  // Init
   renderTimelineFeed();
   fetchStats();
   loadDictionary();

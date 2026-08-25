@@ -3,339 +3,312 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flow Pro System 7 | Skeuomorphic Voice Dictation & Intelligence</title>
+  <title>Flow Pro Modular Synthesizer | Cyber-Pop Voice Studio</title>
   <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
-<body class="mac-os-mode">
-  <div class="app-window">
-    <!-- Window Top Header Bar with Skeuomorphic Stripes -->
-    <header class="window-topbar">
-      <div class="topbar-left">
-        <div class="mac-traffic-lights">
-          <span class="mac-traffic-btn mac-traffic-close"></span>
-          <span class="mac-traffic-btn mac-traffic-minimize"></span>
-          <span class="mac-traffic-btn mac-traffic-expand"></span>
+<body>
+  <div class="synth-app-shell">
+    <!-- Top Console Header -->
+    <header class="synth-topbar">
+      <div class="brand-badge-group">
+        <div class="brand-badge-logo">
+          <span>🎛️</span>
+          <span>FLOW SYNTH</span>
         </div>
+        <span class="pro-chip">PRO MODULAR v2.0</span>
       </div>
 
-      <div class="topbar-stripes"></div>
-
-      <div class="topbar-right">
-        <div class="topbar-pill" id="macClock">12:00 PM</div>
-        <div class="topbar-pill" style="background: var(--mac-lime);">Flow Pro v2.0</div>
+      <div class="synth-status-pills">
+        <div class="synth-pill active-lime" id="engineStatusPill">⚡ ON-DEVICE DSP ACTIVE</div>
+        <div class="synth-pill active-yellow" id="liveClockPill">12:00 PM</div>
       </div>
     </header>
 
-    <!-- Main Body Layout -->
-    <div class="app-body">
-      <!-- Sidebar -->
-      <aside class="app-sidebar">
+    <!-- Main Deck Layout -->
+    <div class="synth-body">
+      <!-- Tactile Pink Modular Sidebar -->
+      <aside class="synth-sidebar">
         <div>
-          <div class="brand-section">
-            <div class="flow-logo-mark">
-              <div class="flow-bar"></div>
-              <div class="flow-bar"></div>
-              <div class="flow-bar"></div>
-            </div>
-            <span class="brand-title">Flow</span>
-            <span class="pro-badge">Pro</span>
-          </div>
-
-          <nav class="nav-menu">
-            <a class="nav-item active" data-view="view-dictation">
+          <nav class="synth-nav-deck">
+            <a class="synth-nav-btn active" data-view="view-dictation">
               <span class="nav-icon">🎙️</span>
               <span>Dictation</span>
             </a>
-            <a class="nav-item" data-view="view-notetaker">
+            <a class="synth-nav-btn" data-view="view-notetaker">
               <span class="nav-icon">🔘</span>
               <span>Notetaker</span>
             </a>
-            <a class="nav-item" data-view="view-insights">
+            <a class="synth-nav-btn" data-view="view-insights">
               <span class="nav-icon">📊</span>
               <span>Insights</span>
             </a>
-            <a class="nav-item" data-view="view-dictionary">
+            <a class="synth-nav-btn" data-view="view-dictionary">
               <span class="nav-icon">📖</span>
               <span>Dictionary</span>
             </a>
-            <a class="nav-item" data-view="view-snippets">
+            <a class="synth-nav-btn" data-view="view-snippets">
               <span class="nav-icon">✂️</span>
               <span>Snippets</span>
             </a>
-            <a class="nav-item" data-view="view-style">
-              <span class="nav-icon">𝐓ᴛ</span>
-              <span>Style</span>
+            <a class="synth-nav-btn" data-view="view-style">
+              <span class="nav-icon">🎛️</span>
+              <span>Voice Style</span>
             </a>
-            <a class="nav-item" data-view="view-transforms">
+            <a class="synth-nav-btn" data-view="view-transforms">
               <span class="nav-icon">🪄</span>
               <span>Transforms</span>
             </a>
-            <a class="nav-item" data-view="view-scratchpad">
+            <a class="synth-nav-btn" data-view="view-scratchpad">
               <span class="nav-icon">📝</span>
               <span>Scratchpad</span>
             </a>
           </nav>
         </div>
 
-        <div class="sidebar-bottom">
-          <a class="nav-item">
+        <div class="sidebar-faders-bottom">
+          <a class="synth-nav-btn">
             <span class="nav-icon">👥</span>
-            <span>Invite your team</span>
+            <span>Invite Team</span>
           </a>
-          <a class="nav-item">
-            <span class="nav-icon">🎁</span>
-            <span>Get a free month</span>
-          </a>
-          <a class="nav-item" data-view="view-settings">
-            <span class="nav-icon">⚙️</span>
-            <span>Settings</span>
-          </a>
-          <a class="nav-item" href="/docs" target="_blank">
-            <span class="nav-icon">❓</span>
-            <span>Help & API</span>
+          <a class="synth-nav-btn" href="/docs" target="_blank">
+            <span class="nav-icon">⚡</span>
+            <span>API Docs</span>
           </a>
         </div>
       </aside>
 
-      <!-- Main Content Views -->
-      <main class="content-area">
-        <!-- VIEW 1: DICTATION -->
-        <section id="view-dictation" class="view-pane active">
-          <div class="view-header">
-            <h1 class="view-title">Welcome back, Greninja</h1>
+      <!-- Workspace Console -->
+      <main class="synth-workspace">
+        <!-- VIEW 1: DICTATION SYNTH DECK -->
+        <section id="view-dictation" class="synth-view active">
+          <div class="synth-view-header">
+            <h1 class="synth-view-title">Welcome back, Greninja</h1>
           </div>
 
-          <!-- Hero Promo Banner -->
-          <div class="dictation-hero-banner">
-            <div class="hero-text">
-              <h2>Make Flow sound like <em>you</em></h2>
-              <p>Set up different writing styles for different apps.</p>
-              <button class="btn-pill-white" onclick="switchView('view-style')">Start now</button>
+          <!-- Hero Deck Banner -->
+          <div class="synth-hero-deck">
+            <div class="hero-content">
+              <h2>Make Flow sound like <em>YOU</em></h2>
+              <p>Set up adaptive writing styles, macros & tone synthesizers.</p>
+              <button class="synth-btn-pop" onclick="switchView('view-style')">Configure Voice Twin</button>
             </div>
-            <div class="hero-image-badge">
-              <span style="font-size: 2.2rem;">✨🎙️✨</span>
-              <div style="font-size: 1.15rem; font-weight: 800;">10K Adaptive AI</div>
-            </div>
+            <div style="font-size: 3.5rem; text-shadow: 4px 4px 0 #000;">🎛️✨</div>
           </div>
 
-          <!-- Dictation Action Bar & Tones -->
-          <div class="flow-mic-bar">
-            <div class="mic-action-group">
-              <button id="mainMicBtn" class="main-mic-button" title="Click or Hold Spacebar to Dictate">
-                🎙️
-              </button>
-              <div class="mic-meta">
-                <span id="micStatusText" class="mic-title">Ready to dictate</span>
-                <span class="mic-shortcut-hint">Hold <kbd style="background: #000; color: #fff; padding: 2px 6px; border-radius: 4px; font-weight: 700;">Space</kbd> or click to record</span>
+          <!-- Modular Audio Control & Oscilloscope Unit -->
+          <div class="synth-control-deck">
+            <div class="deck-upper-row">
+              <div class="tactile-pad-group">
+                <button id="mainMicBtn" class="synth-record-pad" title="Hold Spacebar or Click to Dictate">
+                  🎙️
+                </button>
+                <div class="pad-meta">
+                  <span id="micStatusText" class="pad-title">READY TO DICTATE</span>
+                  <span class="pad-subtitle">HOLD <kbd style="background: var(--synth-yellow); color: #000; padding: 2px 8px; border-radius: 6px; border: 2px solid #000; font-weight: 800;">SPACEBAR</kbd> OR CLICK PAD</span>
+                </div>
+              </div>
+
+              <!-- Oscilloscope CRT Screen -->
+              <div class="synth-crt-screen">
+                <canvas id="oscilloscopeCanvas" width="300" height="68"></canvas>
               </div>
             </div>
 
-            <div class="tone-pills-row">
-              <span style="font-size: 1.15rem; font-weight: 800; color: #000; margin-right: 4px;">TONE:</span>
-              <button class="tone-pill-btn active" data-tone="clean">Clean & Fluid</button>
-              <button class="tone-pill-btn" data-tone="professional">Professional</button>
-              <button class="tone-pill-btn" data-tone="casual">Casual</button>
-              <button class="tone-pill-btn" data-tone="code">Code</button>
-              <button class="tone-pill-btn" data-tone="bullets">Bullet Points</button>
-              <button class="tone-pill-btn" data-tone="raw">Raw</button>
+            <!-- Tactile Tone Selector Keys -->
+            <div class="tone-keys-deck">
+              <span style="font-weight: 800; font-size: 0.95rem; color: var(--synth-yellow); margin-right: 6px;">SYNTH TONE:</span>
+              <button class="tone-key-btn active" data-tone="clean">✨ Clean & Fluid</button>
+              <button class="tone-key-btn" data-tone="professional">💼 Professional</button>
+              <button class="tone-key-btn" data-tone="casual">☕ Casual</button>
+              <button class="tone-key-btn" data-tone="code">💻 Code</button>
+              <button class="tone-key-btn" data-tone="bullets">📝 Bullets</button>
+              <button class="tone-key-btn" data-tone="raw">🎙️ Raw Verbatim</button>
             </div>
           </div>
 
-          <!-- Dictation Grid: Stream Feed + Right Stats -->
-          <div class="dictation-grid">
-            <!-- Left Stream Feed -->
-            <div class="feed-container">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span class="feed-date-header">TODAY</span>
-                <span id="liveLatencyTag" class="topbar-pill" style="background: var(--mac-lime); font-size: 1.05rem;">⚡ Latency: 120ms</span>
+          <!-- Dictation Stream Deck + Right Synth Modules -->
+          <div class="dictation-stream-grid">
+            <!-- Left Stream Feed Deck -->
+            <div class="stream-deck">
+              <div class="stream-deck-header">
+                <span class="stream-tag-date">TODAY'S AUDIO CAPTURE</span>
+                <span id="liveLatencyTag" style="font-family: var(--font-mono); font-size: 0.88rem; font-weight: 800; color: var(--synth-lime);">⚡ LATENCY: 120ms</span>
               </div>
 
-              <!-- Stream Timeline List -->
-              <div id="dictationTimelineList" style="display: flex; flex-direction: column; gap: 12px;">
+              <div id="dictationTimelineList" style="display: flex; flex-direction: column; gap: 14px;">
                 <!-- Feed items rendered dynamically -->
               </div>
             </div>
 
-            <!-- Right Column Widgets -->
-            <div class="stats-sidebar-col">
-              <div class="card-widget stats-summary-widget">
-                <div class="stat-metric-row">
-                  <span class="stat-big-number" id="sideTotalWords">15.5K</span>
-                  <span class="stat-sub-label">total words</span>
+            <!-- Right Synth Modules Column -->
+            <div class="synth-modules-col">
+              <div class="synth-module-card">
+                <div class="mod-header">Speech Metrics Module</div>
+                <div class="mod-metric-row">
+                  <span style="font-weight: 700; color: #9CA3AF;">TOTAL WORDS</span>
+                  <span class="mod-big-val" id="sideTotalWords">15.5K</span>
                 </div>
-                <div class="stat-metric-row">
-                  <span class="stat-big-number" id="sideWpm">85</span>
-                  <span class="stat-sub-label">wpm</span>
+                <div class="mod-metric-row">
+                  <span style="font-weight: 700; color: #9CA3AF;">WPM SPEEDS</span>
+                  <span class="mod-big-val" id="sideWpm" style="color: var(--synth-blue);">85</span>
                 </div>
-                <div class="stat-metric-row">
-                  <span class="stat-big-number" id="sideStreak">1</span>
-                  <span class="stat-sub-label">day streak</span>
+                <div class="mod-metric-row" style="border-bottom: none; margin-bottom: 0;">
+                  <span style="font-weight: 700; color: #9CA3AF;">DAY STREAK</span>
+                  <span class="mod-big-val" id="sideStreak" style="color: var(--synth-pink);">1</span>
                 </div>
               </div>
 
-              <div class="card-widget voice-profile-widget">
-                <div>
-                  <div class="vp-title">Voice Profile</div>
-                  <div class="vp-badge" id="vpBadgeName">Protocol Investigator</div>
-                </div>
-                <span style="font-size: 2.2rem;">🧑‍💻</span>
+              <div class="synth-module-card voice-twin-card">
+                <div class="mod-header">Voice Profile Active</div>
+                <div style="font-size: 1.25rem; font-weight: 800;" id="vpBadgeName">Protocol Investigator</div>
+                <div style="margin-top: 6px; font-size: 0.9rem; font-weight: 700;">10K Gold Intent Engine: <strong style="background: #000; color: var(--synth-lime); padding: 2px 6px; border-radius: 4px;">ACTIVE</strong></div>
               </div>
             </div>
           </div>
         </section>
 
-        <!-- VIEW 2: INSIGHTS (Exact match to Wispr Flow layout in Skeuomorphic Style) -->
-        <section id="view-insights" class="view-pane">
-          <div class="view-header">
+        <!-- VIEW 2: INSIGHTS SYNTH CONSOLE -->
+        <section id="view-insights" class="synth-view">
+          <div class="synth-view-header">
             <div>
-              <h1 class="view-title">Insights</h1>
-              <div class="tabs-subnav">
-                <button class="subtab-btn active">Your usage</button>
-                <button class="subtab-btn">Your voice</button>
+              <h1 class="synth-view-title">Insights Console</h1>
+              <div style="display: flex; gap: 10px; margin-top: 6px;">
+                <button class="synth-btn-pop" style="padding: 4px 14px; font-size: 0.95rem;">Usage Analytics</button>
+                <button class="synth-btn-pop" style="padding: 4px 14px; font-size: 0.95rem; background: #262938; color: #fff;">Voice Matrix</button>
               </div>
             </div>
-            <div class="share-stamp" title="Share Insights">SHARE</div>
+            <div class="synth-btn-pop" style="background: var(--synth-lime); border-radius: 50%; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem;" title="Share Metrics">
+              SHARE
+            </div>
           </div>
 
-          <!-- Top Metrics Grid -->
-          <div class="metrics-top-grid">
-            <!-- Metric 1: WPM Gauge -->
-            <div class="metric-card-box">
+          <!-- Top Meter Boxes -->
+          <div class="synth-metrics-grid">
+            <!-- Meter 1: WPM Gauge -->
+            <div class="meter-box-deck">
               <div>
-                <span class="metric-header-title">WORDS PER MINUTE ⓘ</span>
-                <div style="font-size: 2.8rem; font-weight: 800; margin-top: 4px;" id="insightsWpm">85</div>
+                <span class="meter-title">WORDS PER MINUTE (WPM)</span>
+                <div style="font-size: 2.8rem; font-weight: 800; color: var(--synth-lime); margin-top: 4px;" id="insightsWpm">85</div>
               </div>
-              <div class="speedometer-wrap">
+              <div class="rotary-gauge-wrap">
                 <canvas id="gaugeCanvas" width="140" height="70" class="gauge-canvas"></canvas>
-                <div class="gauge-center-text">Top 7%</div>
+                <div class="gauge-top-badge">Top 7%</div>
               </div>
             </div>
 
-            <!-- Metric 2: Fixes Made -->
-            <div class="metric-card-box">
+            <!-- Meter 2: Fixes Made -->
+            <div class="meter-box-deck">
               <div>
-                <span class="metric-header-title">FIXES MADE BY FLOW</span>
-                <div style="font-size: 2.8rem; font-weight: 800; margin-top: 4px;" id="insightsTotalFixes">2,163</div>
+                <span class="meter-title">FIXES MADE BY FLOW</span>
+                <div style="font-size: 2.8rem; font-weight: 800; color: var(--synth-pink); margin-top: 4px;" id="insightsTotalFixes">2,163</div>
               </div>
-              <div class="fixes-breakdown">
-                <div class="fixes-row">
-                  <span><strong>1,565</strong> words corrected ⓘ</span>
+              <div style="display: flex; flex-direction: column; gap: 6px; font-weight: 700; margin-top: 0.75rem;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #9CA3AF;">Words Corrected:</span>
+                  <span style="color: var(--synth-lime);">1,565</span>
                 </div>
-                <div class="fixes-row">
-                  <span><strong>598</strong> dictionary fixes ⓘ</span>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #9CA3AF;">Dictionary Fixes:</span>
+                  <span style="color: var(--synth-blue);">598</span>
                 </div>
               </div>
             </div>
 
-            <!-- Metric 3: Total Words & Dr. Seuss Milestone -->
-            <div class="metric-card-box">
+            <!-- Meter 3: Total Words & Dr. Seuss Milestone -->
+            <div class="meter-box-deck">
               <div>
-                <span class="metric-header-title">TOTAL WORDS DICTATED</span>
-                <div style="font-size: 2.8rem; font-weight: 800; margin-top: 4px;" id="insightsTotalWords">15,470</div>
+                <span class="meter-title">TOTAL WORDS DICTATED</span>
+                <div style="font-size: 2.8rem; font-weight: 800; color: var(--synth-yellow); margin-top: 4px;" id="insightsTotalWords">15,470</div>
               </div>
               <div>
-                <div class="dr-seuss-quote" id="drSeussQuote">You've written 1 Dr. Seuss book!</div>
-                <div class="device-seg-bar">
-                  <div class="seg-desktop">💻 Desktop</div>
-                  <div class="seg-mobile">📱 Mobile</div>
+                <div class="seuss-badge-card" id="drSeussQuote">You've written 1 Dr. Seuss book!</div>
+                <div class="synth-seg-bar">
+                  <div class="seg-desk">💻 Desktop: 82%</div>
+                  <div class="seg-mob">📱 Mobile: 18%</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Bottom Grid: Desktop Usage & Heatmap -->
-          <div class="insights-bottom-grid">
-            <!-- Desktop Usage List -->
-            <div class="metric-card-box">
+          <!-- Bottom Split: Desktop Usage Faders + Sequencer Heatmap -->
+          <div class="synth-bottom-split">
+            <!-- App Usage Faders -->
+            <div class="meter-box-deck">
               <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <h3 style="font-size: 1.6rem; font-weight: 800;">Desktop usage</h3>
-                <span style="font-size: 1.05rem; font-weight: 800; color: #444;">TOTAL APPS USED | 13</span>
+                <h3 style="font-size: 1.3rem; font-weight: 800; color: #FFFFFF;">Desktop Application Usage</h3>
+                <span style="font-size: 0.8rem; font-weight: 800; color: var(--synth-lime);">APPS: 13</span>
               </div>
 
-              <div class="app-usage-list">
-                <div class="usage-bar-item">
-                  <span class="usage-icon">🤖</span>
-                  <div class="usage-bar-track" style="width: 76%;">76%</div>
-                  <span class="usage-label">119 AI PROMPTS</span>
+              <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 1rem;">
+                <div class="usage-fader-row">
+                  <span style="width: 24px;">🤖</span>
+                  <div class="usage-fader-track" style="width: 76%; background: var(--synth-lime);">76%</div>
+                  <span style="min-width: 120px; font-size: 0.82rem; color: #9CA3AF;">119 AI PROMPTS</span>
                 </div>
-                <div class="usage-bar-item">
-                  <span class="usage-icon">♾️</span>
-                  <div class="usage-bar-track" style="width: 25%; background: var(--mac-cyan);">15%</div>
-                  <span class="usage-label">20 OTHER TASKS</span>
+                <div class="usage-fader-row">
+                  <span style="width: 24px;">♾️</span>
+                  <div class="usage-fader-track" style="width: 25%; background: var(--synth-blue);">15%</div>
+                  <span style="min-width: 120px; font-size: 0.82rem; color: #9CA3AF;">20 OTHER TASKS</span>
                 </div>
-                <div class="usage-bar-item">
-                  <span class="usage-icon">📄</span>
-                  <div class="usage-bar-track" style="width: 15%; background: var(--mac-yellow);">9%</div>
-                  <span class="usage-label">1 DOCUMENTS</span>
+                <div class="usage-fader-row">
+                  <span style="width: 24px;">📄</span>
+                  <div class="usage-fader-track" style="width: 15%; background: var(--synth-yellow);">9%</div>
+                  <span style="min-width: 120px; font-size: 0.82rem; color: #9CA3AF;">1 DOCUMENTS</span>
                 </div>
-                <div class="usage-bar-item">
-                  <span class="usage-icon">✉️</span>
-                  <div class="usage-bar-track" style="width: 8%; background: #ddd; color: #000;">0%</div>
-                  <span class="usage-label">0 EMAILS</span>
-                </div>
-                <div class="usage-bar-item">
-                  <span class="usage-icon">💬</span>
-                  <div class="usage-bar-track" style="width: 8%; background: #ddd; color: #000;">0%</div>
-                  <span class="usage-label">0 WORK MESSAGES</span>
+                <div class="usage-fader-row">
+                  <span style="width: 24px;">✉️</span>
+                  <div class="usage-fader-track" style="width: 8%; background: #374151; color: #fff;">0%</div>
+                  <span style="min-width: 120px; font-size: 0.82rem; color: #9CA3AF;">0 EMAILS</span>
                 </div>
               </div>
             </div>
 
-            <!-- 1 Day Streak Heatmap -->
-            <div class="metric-card-box heatmap-card">
+            <!-- Sequencer Activity Heatmap -->
+            <div class="meter-box-deck">
               <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <h3 style="font-size: 1.6rem; font-weight: 800;" id="streakTitle">1 day streak</h3>
-                <span style="font-size: 1.05rem; font-weight: 800; color: #444;">LONGEST STREAK | 4 DAYS</span>
+                <h3 style="font-size: 1.3rem; font-weight: 800; color: #FFFFFF;" id="streakTitle">1 Day Activity Streak</h3>
+                <span style="font-size: 0.8rem; font-weight: 800; color: var(--synth-pink);">LONGEST: 4 DAYS</span>
               </div>
 
-              <div style="display: flex; justify-content: space-between; font-size: 1.15rem; font-weight: 800; color: #000; margin-top: 0.75rem;">
-                <span>May</span>
-                <span>Jun</span>
-                <span>Jul</span>
-                <span>Aug</span>
+              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 800; color: var(--synth-yellow); margin-top: 0.75rem;">
+                <span>MAY</span>
+                <span>JUN</span>
+                <span>JUL</span>
+                <span>AUG</span>
               </div>
 
-              <div class="heatmap-grid" id="streakHeatmapGrid">
-                <!-- Dynamically generated heat cells -->
-              </div>
-
-              <div style="display: flex; justify-content: flex-end; align-items: center; gap: 6px; font-size: 1.05rem; font-weight: 800; margin-top: 0.75rem;">
-                <span>Less</span>
-                <span class="heat-cell" style="width: 12px; height: 12px;"></span>
-                <span class="heat-cell l1" style="width: 12px; height: 12px;"></span>
-                <span class="heat-cell l2" style="width: 12px; height: 12px;"></span>
-                <span class="heat-cell l4" style="width: 12px; height: 12px;"></span>
-                <span>More</span>
+              <div class="sequencer-heatmap-grid" id="streakHeatmapGrid">
+                <!-- Cells generated dynamically -->
               </div>
             </div>
           </div>
         </section>
 
-        <!-- VIEW 3: DICTIONARY -->
-        <section id="view-dictionary" class="view-pane">
-          <div class="view-header">
+        <!-- VIEW 3: DICTIONARY RACK -->
+        <section id="view-dictionary" class="synth-view">
+          <div class="synth-view-header">
             <div>
-              <h1 class="view-title">Dictionary</h1>
-              <p style="color: #444; font-size: 1.25rem;">Teach Flow company names, acronyms, and coding terms.</p>
+              <h1 class="synth-view-title">Dictionary Rack</h1>
+              <p style="color: var(--synth-blue); font-size: 1rem; font-weight: 600;">Phonetic speech replacement matrix for code, tech, & developer names.</p>
             </div>
           </div>
 
-          <div class="dict-toolbar">
-            <input type="text" id="addPhraseInput" class="dict-input" placeholder="Spoken phrase (e.g. fast api)" />
-            <input type="text" id="addReplInput" class="dict-input" placeholder="Replacement (e.g. FastAPI)" />
-            <select id="addCatSelect" class="dict-input" style="max-width: 140px; font-weight: 700;">
+          <div class="rack-toolbar">
+            <input type="text" id="addPhraseInput" class="rack-input" placeholder="Spoken trigger (e.g. fast api)" />
+            <input type="text" id="addReplInput" class="rack-input" placeholder="Replacement (e.g. FastAPI)" />
+            <select id="addCatSelect" class="rack-input" style="max-width: 140px; background: #000; font-weight: 700;">
               <option value="code">Code</option>
               <option value="tech">Tech</option>
               <option value="names">Names</option>
               <option value="acronyms">Acronyms</option>
             </select>
-            <button id="submitWordBtn" class="btn-teal">+ Add Word</button>
+            <button id="submitWordBtn" class="synth-btn-pop" style="background: var(--synth-lime);">+ ADD WORD</button>
           </div>
 
-          <input type="text" id="searchWordsInput" class="dict-input" placeholder="🔍 Search vocabulary..." style="width: 100%;" />
+          <input type="text" id="searchWordsInput" class="rack-input" placeholder="🔍 Search vocabulary rack..." style="width: 100%;" />
 
-          <div class="table-card">
-            <table class="flow-table">
+          <div class="rack-table-card">
+            <table class="rack-table">
               <thead>
                 <tr>
                   <th>Spoken Trigger</th>
@@ -349,27 +322,27 @@
           </div>
         </section>
 
-        <!-- VIEW 4: SNIPPETS -->
-        <section id="view-snippets" class="view-pane">
-          <div class="view-header">
+        <!-- VIEW 4: SNIPPETS RACK -->
+        <section id="view-snippets" class="synth-view">
+          <div class="synth-view-header">
             <div>
-              <h1 class="view-title">Snippets</h1>
-              <p style="color: #444; font-size: 1.25rem;">Voice shortcuts expanded automatically as you dictate.</p>
+              <h1 class="synth-view-title">Snippets Rack</h1>
+              <p style="color: var(--synth-pink); font-size: 1rem; font-weight: 600;">Voice macro triggers expanded automatically as you dictate.</p>
             </div>
           </div>
 
-          <div class="dict-toolbar">
-            <input type="text" id="snipTriggerInput" class="dict-input" placeholder="Trigger (e.g. !sign)" style="max-width: 180px;" />
-            <input type="text" id="snipExpInput" class="dict-input" placeholder="Expansion (e.g. Best regards, Athul)" />
-            <button id="submitSnipBtn" class="btn-teal">+ Add Snippet</button>
+          <div class="rack-toolbar">
+            <input type="text" id="snipTriggerInput" class="rack-input" placeholder="Trigger (e.g. !sign)" style="max-width: 180px;" />
+            <input type="text" id="snipExpInput" class="rack-input" placeholder="Expanded text (e.g. Best regards, Athul)" />
+            <button id="submitSnipBtn" class="synth-btn-pop" style="background: var(--synth-pink); color: #fff;">+ ADD SNIPPET</button>
           </div>
 
-          <div class="table-card">
-            <table class="flow-table">
+          <div class="rack-table-card">
+            <table class="rack-table">
               <thead>
                 <tr>
-                  <th>Shortcut</th>
-                  <th>Expanded Text</th>
+                  <th>Shortcut Trigger</th>
+                  <th>Expanded Output</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -378,36 +351,36 @@
           </div>
         </section>
 
-        <!-- VIEW 5: STYLE & VOICE PROFILE -->
-        <section id="view-style" class="view-pane">
-          <div class="view-header">
+        <!-- VIEW 5: VOICE STYLE & 10K ADAPTIVE TWIN -->
+        <section id="view-style" class="synth-view">
+          <div class="synth-view-header">
             <div>
-              <h1 class="view-title">Voice Style & Personal Twin</h1>
-              <p style="color: #444; font-size: 1.25rem;">10K Word Milestone AI Adaptation and Custom Profiles.</p>
+              <h1 class="synth-view-title">Voice Style & Personal Twin</h1>
+              <p style="color: var(--synth-yellow); font-size: 1rem; font-weight: 600;">10,000+ Word Milestone Adaptive Intent Engine & Profiles.</p>
             </div>
           </div>
 
-          <div class="metric-card-box">
-            <h3 style="font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem;">Adaptive Intent Reasoning (10K+ Words)</h3>
-            <p style="font-size: 1.25rem; color: #222; line-height: 1.4;" id="intentExplanationText">
-              When enabled, Flow reads implicit cues in your speech to automatically structure code functions, pull request commit messages, and checklist items.
+          <div class="synth-module-card">
+            <h3 style="font-size: 1.4rem; font-weight: 800; color: var(--synth-lime); margin-bottom: 0.5rem;">Adaptive Intent Reasoning (10K+ Words Unlocked)</h3>
+            <p style="font-size: 1.05rem; color: #D1D5DB; line-height: 1.6;">
+              When active, Flow inspects implicit speech context to automatically format Pull Requests, functions, and structured markdown action items.
             </p>
-            <div style="margin-top: 1rem; display: flex; gap: 12px; align-items: center;">
-              <span class="category-tag" id="adaptiveStatusTag" style="font-size: 1.15rem; padding: 4px 12px; background: var(--mac-lime);">ACTIVE: Gold 10K Unlocked</span>
-              <button class="btn-teal" id="toggle10kBtn" style="background: var(--mac-yellow);">⚡ Simulate 10K+ Words</button>
+            <div style="margin-top: 1.25rem; display: flex; gap: 14px; align-items: center;">
+              <span class="synth-cat-tag" style="background: var(--synth-lime); font-size: 0.95rem; padding: 6px 14px;" id="adaptiveStatusTag">ACTIVE: Gold 10K+ Unlocked</span>
+              <button class="synth-btn-pop" id="toggle10kBtn" style="background: var(--synth-yellow);">⚡ Simulate 10K+ Words</button>
             </div>
           </div>
         </section>
 
         <!-- VIEW 6: NOTETAKER & SCRATCHPAD -->
-        <section id="view-scratchpad" class="view-pane">
-          <div class="view-header">
+        <section id="view-scratchpad" class="synth-view">
+          <div class="synth-view-header">
             <div>
-              <h1 class="view-title">Scratchpad</h1>
-              <p style="color: #444; font-size: 1.25rem;">Dictate ideas, test formatting, or export notes.</p>
+              <h1 class="synth-view-title">Cyber Scratchpad</h1>
+              <p style="color: var(--synth-lime); font-size: 1rem; font-weight: 600;">Dictate code, notes, and brainstorms.</p>
             </div>
           </div>
-          <textarea id="scratchpadArea" style="width: 100%; height: 350px; border-radius: 8px; border: 2px solid #000000; padding: 1.25rem; font-family: var(--font-mac-title); font-size: 1.35rem; line-height: 1.4; outline: none; box-shadow: var(--mac-shadow-sm);" placeholder="Start speaking or type here..."></textarea>
+          <textarea id="scratchpadArea" style="width: 100%; height: 350px; border-radius: 14px; border: 3px solid var(--synth-purple); background: #000; color: var(--synth-lime); font-family: var(--font-mono); font-size: 1.1rem; padding: 1.25rem; outline: none; box-shadow: 0 0 16px rgba(184, 107, 255, 0.2);" placeholder="Start dictating or typing here..."></textarea>
         </section>
       </main>
     </div>
