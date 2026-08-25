@@ -8,13 +8,14 @@ DATA_DIR = BASE_DIR / "data"
 STATIC_DIR = BASE_DIR / "static"
 DICTIONARY_FILE = DATA_DIR / "dictionary.json"
 HISTORY_FILE = DATA_DIR / "history.json"
+SNIPPETS_FILE = DATA_DIR / "snippets.json"
+STATS_FILE = DATA_DIR / "stats.json"
 
 # Server configuration
 HOST = os.getenv("ECHOSCRIBE_HOST", "0.0.0.0")
 PORT = int(os.getenv("ECHOSCRIBE_PORT", "8765"))
 
 # Model & Provider configuration
-# Supported providers: "sherpa-onnx", "whisper-api", "auto", "mock"
 STT_PROVIDER = os.getenv("ECHOSCRIBE_PROVIDER", "auto")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 

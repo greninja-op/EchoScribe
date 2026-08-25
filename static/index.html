@@ -3,182 +3,326 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EchoScribe | Developer Voice & Transcription Hub</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <title>EchoScribe System 7 | Voice, Dictionary & Wispr Flow Studio</title>
   <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
-<body class="dark-theme">
-  <div class="app-layout">
-    <!-- Header -->
-    <header class="top-nav">
-      <div class="brand">
-        <div class="logo-mark">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-            <line x1="12" y1="19" x2="12" y2="22" />
-          </svg>
-        </div>
-        <div class="brand-text">
-          <h1>EchoScribe</h1>
-          <span class="badge badge-subtle">Voice & Dictionary Hub</span>
-        </div>
+<body class="mac-os-mode">
+  <!-- System 7 Top Menu Bar -->
+  <header class="mac-menubar">
+    <div class="mac-menu-left">
+      <span class="mac-apple-logo" title="About EchoScribe System 7">🍏</span>
+      <span class="mac-menu-item">File</span>
+      <span class="mac-menu-item">Edit</span>
+      <span class="mac-menu-item">Flow</span>
+      <span class="mac-menu-item">Dictionary</span>
+      <span class="mac-menu-item">Milestones</span>
+      <span class="mac-menu-item">Special</span>
+    </div>
+
+    <div class="mac-menu-right">
+      <div id="top10kBadge" class="mac-menu-pill" title="10K Milestone Status">
+        <span>🥇</span> <span id="topTierLabel">Tier: Bronze</span>
       </div>
-
-      <div class="status-hud">
-        <div class="hud-pill" id="engineStatusPill">
-          <span class="status-dot pulsing"></span>
-          <span id="engineLabel">Engine: Connecting...</span>
-        </div>
-        <div class="hud-pill">
-          <span class="icon">📖</span>
-          <span id="dictCountLabel">0 Words</span>
-        </div>
-        <a href="/docs" target="_blank" class="btn btn-ghost btn-sm">API Docs ↗</a>
+      <div class="mac-menu-pill">
+        <span>⚡</span> <span id="topEngineLabel">Engine: Local</span>
       </div>
-    </header>
+      <div class="mac-menu-pill" id="macClock">12:00 PM</div>
+      <a href="/docs" target="_blank" class="mac-btn mac-btn-yellow" style="padding: 1px 6px; font-size: 1.05rem;">API ↗</a>
+    </div>
+  </header>
 
-    <!-- Main Workspace Grid -->
-    <main class="main-content">
-      <!-- Left Column: Dictation Flow & Live Audio -->
-      <section class="panel recording-panel">
-        <div class="panel-header">
-          <h2>Continuous Dictation & Flow</h2>
-          <span class="panel-subtitle">Hold or click to transcribe instantly</span>
+  <!-- Desktop Environment -->
+  <main class="mac-desktop">
+    <!-- Desktop Shortcut Icons -->
+    <nav class="mac-desktop-icons-bar">
+      <div class="mac-desktop-icon" onclick="focusWindow('win-dictate')">
+        <span class="mac-icon-badge">🎙️</span>
+        <span class="mac-icon-label">Dictate.app</span>
+      </div>
+      <div class="mac-desktop-icon" onclick="focusWindow('win-milestones')">
+        <span class="mac-icon-badge">🏆</span>
+        <span class="mac-icon-label">10K Flow</span>
+      </div>
+      <div class="mac-desktop-icon" onclick="focusWindow('win-dictionary')">
+        <span class="mac-icon-badge">📖</span>
+        <span class="mac-icon-label">Dictionary</span>
+      </div>
+      <div class="mac-desktop-icon" onclick="focusWindow('win-analytics')">
+        <span class="mac-icon-badge">📊</span>
+        <span class="mac-icon-label">Speedometer</span>
+      </div>
+    </nav>
+
+    <!-- Workspace Windows Grid -->
+    <div class="mac-workspace-grid">
+      <!-- Left Column: Dictation & Flow Window -->
+      <section class="mac-window" id="win-dictate">
+        <!-- Titlebar -->
+        <div class="mac-titlebar">
+          <div class="mac-traffic-lights">
+            <span class="mac-traffic-btn mac-traffic-close"></span>
+            <span class="mac-traffic-btn mac-traffic-minimize"></span>
+            <span class="mac-traffic-btn mac-traffic-expand"></span>
+          </div>
+          <div class="mac-titlebar-stripes"></div>
+          <span class="mac-titlebar-title">🎙️ EchoScribe Voice & Dictation Studio</span>
         </div>
 
-        <div class="dictation-stage">
-          <!-- Live Audio Visualizer Canvas -->
-          <canvas id="visualizerCanvas" width="400" height="80"></canvas>
-
-          <!-- Interactive Mic Button -->
-          <div class="mic-container">
-            <button id="micBtn" class="mic-trigger" title="Click or Press Space to Record">
-              <div class="pulse-ring ring-1"></div>
-              <div class="pulse-ring ring-2"></div>
-              <div class="mic-icon-wrap">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                  <line x1="12" y1="19" x2="12" y2="22" />
-                </svg>
+        <div class="mac-window-body">
+          <!-- Flow Mode & Tone Controls -->
+          <div class="mac-group-box">
+            <span class="mac-group-label">Wispr Flow Tone & Mode</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <span style="font-weight: 700;">Mode:</span>
+                <button id="modePushBtn" class="mac-btn mac-btn-cyan active">Push-To-Talk</button>
+                <button id="modeContBtn" class="mac-btn">Meeting / Continuous</button>
               </div>
-            </button>
-            <div id="recordingLabel" class="mic-caption">Ready to Dictate</div>
-          </div>
+              <span id="sessionStatusPill" class="mac-tag mac-tag-green">Ready</span>
+            </div>
 
-          <!-- Quick Audio File Upload -->
-          <div class="file-dropzone" id="dropzone">
-            <input type="file" id="audioFileInput" accept="audio/*" hidden />
-            <div class="dropzone-inner" onclick="document.getElementById('audioFileInput').click()">
-              <span class="icon">📁</span>
-              <p>Or drop an audio file here (WAV, MP3, WEBM)</p>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-weight: 700; font-size: 1.1rem;">Tone Selector:</span>
+              <div class="tone-selector-wrap">
+                <button class="tone-btn active" data-tone="clean">✨ Clean & Fluid</button>
+                <button class="tone-btn" data-tone="professional">💼 Professional</button>
+                <button class="tone-btn" data-tone="casual">☕ Casual</button>
+                <button class="tone-btn" data-tone="code">💻 Code / Tech</button>
+                <button class="tone-btn" data-tone="bullets">📝 Bullet Points</button>
+                <button class="tone-btn" data-tone="raw">🎙️ Raw Verbatim</button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Latest Transcript Output Card -->
-        <div class="transcript-card">
-          <div class="card-header">
-            <h3>Cleaned Transcript</h3>
-            <div class="meta-tags">
-              <span id="latencyBadge" class="badge badge-info">-- ms</span>
-              <button id="copyTranscriptBtn" class="btn btn-icon" title="Copy to clipboard">📋</button>
+          <!-- Retro Oscilloscope & Mic Trigger -->
+          <div class="mac-group-box oscilloscope-stage">
+            <span class="mac-group-label">Phosphor Oscilloscope VU</span>
+            <canvas id="oscilloscopeCanvas" width="480" height="64"></canvas>
+
+            <div class="mic-control-row">
+              <button id="mainRecordBtn" class="mac-btn mac-record-btn">
+                <span>🎙️</span> <span id="recordBtnLabel">HOLD SPACE OR CLICK TO DICTATE</span>
+              </button>
+            </div>
+
+            <!-- File Drop / Audio Upload Option -->
+            <div style="display: flex; gap: 8px; width: 100%; align-items: center; justify-content: space-between; margin-top: 4px;">
+              <input type="file" id="audioFileInput" accept="audio/*" hidden />
+              <button class="mac-btn mac-btn-yellow" onclick="document.getElementById('audioFileInput').click()" style="width: 100%;">
+                📁 Drop / Select Audio File (.wav, .mp3, .webm)
+              </button>
             </div>
           </div>
-          <div id="transcriptOutput" class="transcript-body placeholder-text">
-            Speak into the microphone or drop an audio file to see real-time transcription with dictionary corrections applied...
+
+          <!-- Transcript Output Terminal -->
+          <div class="mac-group-box">
+            <span class="mac-group-label">Cleaned Transcript Output</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <div style="display: flex; gap: 6px;">
+                <span id="latencyTag" class="mac-tag mac-tag-yellow">⚡ Latency: -- ms</span>
+                <span id="toneTag" class="mac-tag mac-tag-pink">Tone: Clean</span>
+              </div>
+              <button id="copyBtn" class="mac-btn mac-btn-lime" style="padding: 1px 8px;">📋 Copy Text</button>
+            </div>
+
+            <div id="transcriptScreen" class="transcript-screen placeholder">
+              Hold the record button or speak into your microphone to transcribe in real time with dictionary corrections...
+            </div>
+
+            <!-- Replacements & Snippets Feed -->
+            <div id="replacementsFeed" class="replacements-tray" style="margin-top: 8px;"></div>
           </div>
-          <div id="replacementsFeed" class="replacements-container"></div>
         </div>
       </section>
 
-      <!-- Right Column: Developer Dictionary & API Integration -->
-      <section class="panel dictionary-panel">
-        <div class="tabs-nav">
-          <button class="tab-btn active" data-tab="tab-dictionary">Correction Dictionary</button>
-          <button class="tab-btn" data-tab="tab-api">API & App Integration</button>
-          <button class="tab-btn" data-tab="tab-test">Rule Tester</button>
-        </div>
-
-        <!-- Tab 1: Dictionary Management -->
-        <div id="tab-dictionary" class="tab-pane active">
-          <div class="dict-add-form">
-            <input type="text" id="newPhraseInput" placeholder="Spoken phrase (e.g. fast api)" />
-            <span class="arrow-sep">➔</span>
-            <input type="text" id="newReplacementInput" placeholder="Corrected term (e.g. FastAPI)" />
-            <button id="addWordBtn" class="btn btn-primary">+ Add Word</button>
+      <!-- Right Column: 10K Milestones & Dictionary Windows -->
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <!-- Window 2: 10K Milestones & Adaptive Intent (Wispr Flow) -->
+        <section class="mac-window" id="win-milestones">
+          <div class="mac-titlebar">
+            <div class="mac-traffic-lights">
+              <span class="mac-traffic-btn mac-traffic-close"></span>
+              <span class="mac-traffic-btn mac-traffic-minimize"></span>
+            </div>
+            <div class="mac-titlebar-stripes"></div>
+            <span class="mac-titlebar-title">🏆 10K Milestones & Flow Intelligence</span>
           </div>
 
-          <div class="dict-search-wrap">
-            <input type="text" id="dictSearchInput" placeholder="Search dictionary terms..." />
-          </div>
-
-          <div class="dict-table-wrap">
-            <table class="dict-table">
-              <thead>
-                <tr>
-                  <th>Spoken Trigger</th>
-                  <th>Canonical Output</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="dictTableBody">
-                <!-- Dynamically populated -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Tab 2: API & Integration Code Snippets -->
-        <div id="tab-api" class="tab-pane">
-          <div class="api-guide">
-            <p class="guide-intro">
-              EchoScribe runs as a local background daemon on <code>http://localhost:8765</code>. Connect your apps directly:
-            </p>
-
-            <div class="code-block-wrap">
-              <div class="code-header">
-                <span>Python (`cli-workflow` integration)</span>
+          <div class="mac-window-body">
+            <!-- Milestone Progress Bar -->
+            <div class="mac-group-box">
+              <span class="mac-group-label">Dictation Milestones</span>
+              <div style="display: flex; justify-content: space-between; font-weight: 700;">
+                <span>Total Words: <strong id="totalWordsCount">1,250</strong></span>
+                <span id="nextGoalLabel">Goal: 5,000 (Silver)</span>
               </div>
-              <pre><code class="language-python">import httpx
 
-async def transcribe_via_echoscribe(audio_bytes):
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        files = {"file": ("audio.wav", audio_bytes, "audio/wav")}
-        resp = await client.post("http://localhost:8765/api/transcribe", files=files)
-        data = resp.json()
-        return data.get("transcript") # Cleaned & dictionary-corrected</code></pre>
-            </div>
-
-            <div class="code-block-wrap">
-              <div class="code-header">
-                <span>cURL</span>
+              <div class="milestone-bar-container">
+                <div id="milestoneBarFill" class="milestone-bar-fill"></div>
+                <span id="milestonePctText" class="milestone-bar-text">12.5% Complete</span>
               </div>
-              <pre><code class="language-bash">curl -X POST http://localhost:8765/api/transcribe \
-  -F "file=@sample.wav"</code></pre>
+
+              <div class="tiers-grid">
+                <div class="tier-card unlocked" id="tier-bronze">
+                  <div class="tier-badge">🥉</div>
+                  <div class="tier-name">Bronze</div>
+                  <div class="tier-thresh">1K Words</div>
+                </div>
+                <div class="tier-card" id="tier-silver">
+                  <div class="tier-badge">🥈</div>
+                  <div class="tier-name">Silver</div>
+                  <div class="tier-thresh">5K Words</div>
+                </div>
+                <div class="tier-card tier-10k" id="tier-gold">
+                  <div class="tier-badge">🥇</div>
+                  <div class="tier-name">Gold 10K</div>
+                  <div class="tier-thresh">Auto-Intent</div>
+                </div>
+                <div class="tier-card" id="tier-platinum">
+                  <div class="tier-badge">💎</div>
+                  <div class="tier-name">Platinum</div>
+                  <div class="tier-thresh">25K Words</div>
+                </div>
+              </div>
+
+              <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 1.05rem; color: #444;">Cross 10,000 words to unlock Adaptive Intent:</span>
+                <button id="simulate10kBtn" class="mac-btn mac-btn-yellow">⚡ Simulate 10K+ Words</button>
+              </div>
+            </div>
+
+            <!-- 10K Auto-Intent Reasoning Card -->
+            <div class="intent-hud-box">
+              <div class="intent-header">
+                <span style="font-weight: 700; font-size: 1.25rem;">🧠 Personal Voice Twin & Intent</span>
+                <span id="intentBadge" class="intent-status-badge locked">Locked (&lt;10K Words)</span>
+              </div>
+              <div id="intentReasoningText" style="font-size: 1.15rem; color: #333; line-height: 1.3;">
+                Once you dictate 10,000 words, EchoScribe figures out what you intend (code functions, commit messages, checklist items, emails) and applies predictive formatting.
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Tab 3: Text Rule Tester -->
-        <div id="tab-test" class="tab-pane">
-          <div class="test-pane">
-            <label>Input Text (try: <em>"create a fast api router with camel case user profile and push to git hub"</em>):</label>
-            <textarea id="testInputText" rows="3" placeholder="Enter text to test dictionary replacements..."></textarea>
-            <button id="runRuleTestBtn" class="btn btn-primary btn-block">Test Dictionary & Casing Rules</button>
+        <!-- Window 3: Dictionary & Snippets Manager -->
+        <section class="mac-window" id="win-dictionary">
+          <div class="mac-titlebar">
+            <div class="mac-traffic-lights">
+              <span class="mac-traffic-btn mac-traffic-close"></span>
+              <span class="mac-traffic-btn mac-traffic-minimize"></span>
+            </div>
+            <div class="mac-titlebar-stripes"></div>
+            <span class="mac-titlebar-title">📖 Correction Dictionary & Snippets</span>
+          </div>
 
-            <div class="test-result-box">
-              <label>Result:</label>
-              <div id="testResultOutput" class="code-output"></div>
+          <div class="mac-window-body">
+            <div class="mac-tabs">
+              <button class="mac-tab-btn active" data-tab="tab-words">Words (<span id="dictTabCount">0</span>)</button>
+              <button class="mac-tab-btn" data-tab="tab-snippets">Snippets (<span id="snippetTabCount">4</span>)</button>
+              <button class="mac-tab-btn" data-tab="tab-test">Rule Playground</button>
+            </div>
+
+            <!-- Tab 1: Custom Words -->
+            <div id="tab-words" class="tab-content" style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="display: flex; gap: 4px; align-items: center;">
+                <input type="text" id="newPhrase" placeholder="Spoken (e.g. fast api)" style="flex: 1;" />
+                <span>➔</span>
+                <input type="text" id="newReplacement" placeholder="Term (e.g. FastAPI)" style="flex: 1;" />
+                <select id="newCategory" style="font-family: var(--font-mac-title); font-size: 1.15rem; border: 2px solid #000; border-radius: 4px; padding: 3px;">
+                  <option value="code">Code</option>
+                  <option value="tech">Tech</option>
+                  <option value="names">Names</option>
+                  <option value="acronyms">Acronyms</option>
+                </select>
+                <button id="addWordBtn" class="mac-btn mac-btn-lime">+ Add</button>
+              </div>
+
+              <input type="text" id="dictSearch" placeholder="🔍 Search dictionary terms..." style="width: 100%;" />
+
+              <div class="mac-table-wrap">
+                <table class="mac-table">
+                  <thead>
+                    <tr>
+                      <th>Spoken Trigger</th>
+                      <th>Canonical Output</th>
+                      <th>Category</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dictTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Tab 2: Snippets -->
+            <div id="tab-snippets" class="tab-content" style="display: none; flex-direction: column; gap: 8px;">
+              <div style="display: flex; gap: 6px;">
+                <input type="text" id="newSnippetTrigger" placeholder="Trigger (e.g. !sign)" style="width: 130px;" />
+                <input type="text" id="newSnippetExpansion" placeholder="Expansion text..." style="flex: 1;" />
+                <button id="addSnippetBtn" class="mac-btn mac-btn-cyan">+ Save</button>
+              </div>
+
+              <div class="mac-table-wrap">
+                <table class="mac-table">
+                  <thead>
+                    <tr>
+                      <th>Shortcut</th>
+                      <th>Expansion</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="snippetTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Tab 3: Rule Playground -->
+            <div id="tab-test" class="tab-content" style="display: none; flex-direction: column; gap: 8px;">
+              <textarea id="ruleTestInput" rows="2" placeholder="Type: 'create a fast api endpoint with camel case user profile and !sign'"></textarea>
+              <button id="runPlaygroundBtn" class="mac-btn mac-btn-purple">⚡ Test Rules & Tone Live</button>
+              <div id="playgroundOutput" class="transcript-screen" style="min-height: 50px; font-size: 1.2rem;"></div>
             </div>
           </div>
-        </div>
-      </section>
-    </main>
-  </div>
+        </section>
+
+        <!-- Window 4: Speedometer & Analytics -->
+        <section class="mac-window" id="win-analytics">
+          <div class="mac-titlebar">
+            <div class="mac-traffic-lights">
+              <span class="mac-traffic-btn mac-traffic-close"></span>
+            </div>
+            <div class="mac-titlebar-stripes"></div>
+            <span class="mac-titlebar-title">📊 Flow Analytics & Speedometer</span>
+          </div>
+
+          <div class="mac-window-body">
+            <div class="analytics-grid">
+              <div class="metric-card highlight">
+                <div class="metric-label">Dictation WPM</div>
+                <div class="metric-val" id="statWpm">152</div>
+                <div style="font-size: 0.95rem;">3.8× vs Typing</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Hours Saved</div>
+                <div class="metric-val" id="statHours">4.2h</div>
+                <div style="font-size: 0.95rem;">Typing speedup</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Day Streak</div>
+                <div class="metric-val" id="statStreak">3 🔥</div>
+                <div style="font-size: 0.95rem;">Consistent flow</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Accuracy</div>
+                <div class="metric-val" style="color: #0b9e3f;">99.4%</div>
+                <div style="font-size: 0.95rem;">With dictionary</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
 
   <script src="/static/js/app.js"></script>
 </body>

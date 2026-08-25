@@ -1,0 +1,6 @@
+{
+  "!sign": "Best regards,\nAthul\nLead Engineer",
+  "!pr": "### Description\n- Implements speech-to-text integration with dictionary correction.\n\n### Testing\n- Tested with unittest suite.\n- Verified in browser.",
+  "!todo": "- [ ] **Action Item**: Implement task and verify against spec.",
+  "!bug": "### Bug Report\n**Expected:** Proper audio capture\n**Actual:** Truncated buffer\n**Fix:** Resample to 16kHz mono"
+}

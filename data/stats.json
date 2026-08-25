@@ -1,0 +1,11 @@
+{
+  "total_words": 10510,
+  "total_sessions": 13,
+  "total_duration_sec": 604.0,
+  "streak_days": 3,
+  "favorite_intents": {
+    "code": 14,
+    "notes": 8,
+    "email": 5
+  }
+}
