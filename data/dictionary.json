@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "words": {
+    "fast api": "FastAPI",
+    "fastapi": "FastAPI",
+    "git hub": "GitHub",
+    "github": "GitHub",
+    "open ai": "OpenAI",
+    "openai": "OpenAI",
+    "whisper": "Whisper",
+    "wispr flow": "Wispr Flow",
+    "wispr": "Wispr",
+    "docker compose": "docker-compose",
+    "k eight s": "k8s",
+    "kubernetes": "Kubernetes",
+    "typescript": "TypeScript",
+    "javascript": "JavaScript",
+    "async await": "async/await",
+    "next js": "Next.js",
+    "nextjs": "Next.js",
+    "vue js": "Vue.js",
+    "node js": "Node.js",
+    "tailwind css": "TailwindCSS",
+    "powershell": "PowerShell",
+    "py test": "pytest",
+    "pytest": "pytest",
+    "pydantic": "Pydantic",
+    "uvicorn": "Uvicorn",
+    "echoscribe": "EchoScribe",
+    "echo scribe": "EchoScribe",
+    "bridgemind": "BridgeMind",
+    "bridge mind": "BridgeMind",
+    "tauri": "Tauri"
+  },
+  "patterns": [
+    {
+      "pattern": "\\bcamel\\s+case\\s+([a-zA-Z0-9_]+)\\b",
+      "action": "camelCase"
+    },
+    {
+      "pattern": "\\bsnake\\s+case\\s+([a-zA-Z0-9_]+)\\b",
+      "action": "snake_case"
+    },
+    {
+      "pattern": "\\bkebab\\s+case\\s+([a-zA-Z0-9_]+)\\b",
+      "action": "kebab-case"
+    }
+  ]
+}

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EchoScribe | Developer Voice & Transcription Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body class="dark-theme">
+  <div class="app-layout">
+    <!-- Header -->
+    <header class="top-nav">
+      <div class="brand">
+        <div class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+            <line x1="12" y1="19" x2="12" y2="22" />
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>EchoScribe</h1>
+          <span class="badge badge-subtle">Voice & Dictionary Hub</span>
+        </div>
+      </div>
+
+      <div class="status-hud">
+        <div class="hud-pill" id="engineStatusPill">
+          <span class="status-dot pulsing"></span>
+          <span id="engineLabel">Engine: Connecting...</span>
+        </div>
+        <div class="hud-pill">
+          <span class="icon">📖</span>
+          <span id="dictCountLabel">0 Words</span>
+        </div>
+        <a href="/docs" target="_blank" class="btn btn-ghost btn-sm">API Docs ↗</a>
+      </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <main class="main-content">
+      <!-- Left Column: Dictation Flow & Live Audio -->
+      <section class="panel recording-panel">
+        <div class="panel-header">
+          <h2>Continuous Dictation & Flow</h2>
+          <span class="panel-subtitle">Hold or click to transcribe instantly</span>
+        </div>
+
+        <div class="dictation-stage">
+          <!-- Live Audio Visualizer Canvas -->
+          <canvas id="visualizerCanvas" width="400" height="80"></canvas>
+
+          <!-- Interactive Mic Button -->
+          <div class="mic-container">
+            <button id="micBtn" class="mic-trigger" title="Click or Press Space to Record">
+              <div class="pulse-ring ring-1"></div>
+              <div class="pulse-ring ring-2"></div>
+              <div class="mic-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="22" />
+                </svg>
+              </div>
+            </button>
+            <div id="recordingLabel" class="mic-caption">Ready to Dictate</div>
+          </div>
+
+          <!-- Quick Audio File Upload -->
+          <div class="file-dropzone" id="dropzone">
+            <input type="file" id="audioFileInput" accept="audio/*" hidden />
+            <div class="dropzone-inner" onclick="document.getElementById('audioFileInput').click()">
+              <span class="icon">📁</span>
+              <p>Or drop an audio file here (WAV, MP3, WEBM)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Latest Transcript Output Card -->
+        <div class="transcript-card">
+          <div class="card-header">
+            <h3>Cleaned Transcript</h3>
+            <div class="meta-tags">
+              <span id="latencyBadge" class="badge badge-info">-- ms</span>
+              <button id="copyTranscriptBtn" class="btn btn-icon" title="Copy to clipboard">📋</button>
+            </div>
+          </div>
+          <div id="transcriptOutput" class="transcript-body placeholder-text">
+            Speak into the microphone or drop an audio file to see real-time transcription with dictionary corrections applied...
+          </div>
+          <div id="replacementsFeed" class="replacements-container"></div>
+        </div>
+      </section>
+
+      <!-- Right Column: Developer Dictionary & API Integration -->
+      <section class="panel dictionary-panel">
+        <div class="tabs-nav">
+          <button class="tab-btn active" data-tab="tab-dictionary">Correction Dictionary</button>
+          <button class="tab-btn" data-tab="tab-api">API & App Integration</button>
+          <button class="tab-btn" data-tab="tab-test">Rule Tester</button>
+        </div>
+
+        <!-- Tab 1: Dictionary Management -->
+        <div id="tab-dictionary" class="tab-pane active">
+          <div class="dict-add-form">
+            <input type="text" id="newPhraseInput" placeholder="Spoken phrase (e.g. fast api)" />
+            <span class="arrow-sep">➔</span>
+            <input type="text" id="newReplacementInput" placeholder="Corrected term (e.g. FastAPI)" />
+            <button id="addWordBtn" class="btn btn-primary">+ Add Word</button>
+          </div>
+
+          <div class="dict-search-wrap">
+            <input type="text" id="dictSearchInput" placeholder="Search dictionary terms..." />
+          </div>
+
+          <div class="dict-table-wrap">
+            <table class="dict-table">
+              <thead>
+                <tr>
+                  <th>Spoken Trigger</th>
+                  <th>Canonical Output</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="dictTableBody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: API & Integration Code Snippets -->
+        <div id="tab-api" class="tab-pane">
+          <div class="api-guide">
+            <p class="guide-intro">
+              EchoScribe runs as a local background daemon on <code>http://localhost:8765</code>. Connect your apps directly:
+            </p>
+
+            <div class="code-block-wrap">
+              <div class="code-header">
+                <span>Python (`cli-workflow` integration)</span>
+              </div>
+              <pre><code class="language-python">import httpx
+
+async def transcribe_via_echoscribe(audio_bytes):
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        files = {"file": ("audio.wav", audio_bytes, "audio/wav")}
+        resp = await client.post("http://localhost:8765/api/transcribe", files=files)
+        data = resp.json()
+        return data.get("transcript") # Cleaned & dictionary-corrected</code></pre>
+            </div>
+
+            <div class="code-block-wrap">
+              <div class="code-header">
+                <span>cURL</span>
+              </div>
+              <pre><code class="language-bash">curl -X POST http://localhost:8765/api/transcribe \
+  -F "file=@sample.wav"</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Text Rule Tester -->
+        <div id="tab-test" class="tab-pane">
+          <div class="test-pane">
+            <label>Input Text (try: <em>"create a fast api router with camel case user profile and push to git hub"</em>):</label>
+            <textarea id="testInputText" rows="3" placeholder="Enter text to test dictionary replacements..."></textarea>
+            <button id="runRuleTestBtn" class="btn btn-primary btn-block">Test Dictionary & Casing Rules</button>
+
+            <div class="test-result-box">
+              <label>Result:</label>
+              <div id="testResultOutput" class="code-output"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
