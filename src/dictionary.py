@@ -5,6 +5,7 @@ auto-learning suggestions, in-place voice editing, custom snippets, and Wispr Fl
 """
 import json
 import re
+import time
 import logging
 from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional
@@ -318,13 +319,65 @@ class CorrectionDictionary:
             logger.error(f"Failed to save dictionary: {e}")
             return False
 
-    def add_word(self, spoken_phrase: str, replacement: str, category: str = "code") -> bool:
+    def add_word(
+        self,
+        spoken_phrase: str,
+        replacement: str,
+        category: str = "code",
+        added_via: str = "manual",
+    ) -> bool:
         clean_key = spoken_phrase.strip().lower()
         clean_val = replacement.strip()
         if not clean_key or not clean_val:
             return False
-        self.words[clean_key] = {"replacement": clean_val, "category": category}
+        self.words[clean_key] = {
+            "replacement": clean_val,
+            "category": category,
+            "added_via": added_via,
+            "first_seen": time.time(),
+        }
         return self.save()
+
+    def detect_post_paste_correction(
+        self, original_inserted: str, current_field_text: str
+    ) -> Optional[Dict[str, str]]:
+        """
+        Auto-learning watcher: diffs the original text EchoScribe inserted against
+        what the user subsequently edited.
+        If a word was corrected (e.g. 'fast api' -> 'FastAPI'),
+        returns {'spoken': orig_word, 'replacement': new_word} and records it.
+        """
+        if not original_inserted or not current_field_text or original_inserted == current_field_text:
+            return None
+
+        orig_words = original_inserted.strip().split()
+        curr_words = current_field_text.strip().split()
+
+        if len(orig_words) == len(curr_words):
+            diffs = []
+            for o, c in zip(orig_words, curr_words):
+                clean_o = o.strip(".,;:!?")
+                clean_c = c.strip(".,;:!?")
+                if clean_o != clean_c:
+                    diffs.append((clean_o, clean_c))
+            if len(diffs) == 1:
+                orig_term, new_term = diffs[0]
+                if orig_term and new_term and orig_term != new_term:
+                    self.add_word(orig_term.lower(), new_term, category="auto-learned", added_via="auto")
+                    return {"spoken": orig_term.lower(), "replacement": new_term, "added_via": "auto"}
+
+        # Check 2-word phrase to 1-word replacement (e.g. "fast api" -> "FastAPI")
+        if len(orig_words) == len(curr_words) + 1:
+            for i in range(len(curr_words)):
+                if i + 1 < len(orig_words):
+                    candidate_spoken = f"{orig_words[i]} {orig_words[i+1]}".strip(".,;:!?").lower()
+                    candidate_replace = curr_words[i].strip(".,;:!?")
+                    prefix_match = orig_words[:i] == curr_words[:i]
+                    suffix_match = orig_words[i+2:] == curr_words[i+1:]
+                    if prefix_match and suffix_match:
+                        self.add_word(candidate_spoken, candidate_replace, category="auto-learned", added_via="auto")
+                        return {"spoken": candidate_spoken, "replacement": candidate_replace, "added_via": "auto"}
+        return None
 
     def remove_word(self, spoken_phrase: str) -> bool:
         clean_key = spoken_phrase.strip().lower()

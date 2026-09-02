@@ -90,6 +90,25 @@ class BridgeDispatchRequest(BaseModel):
     difficulty: str = "auto"
 
 
+class CommandApplyRequest(BaseModel):
+    selected_text: str
+    instruction: str
+    surrounding_context: str = ""
+
+
+class FlowCorrectRequest(BaseModel):
+    text: str
+    context: str = ""
+    app_id: str = "default"
+    correction_strength: str = "full"
+    prosody_hints: Optional[Dict[str, Any]] = None
+
+
+class AutoAddWatcherRequest(BaseModel):
+    original_inserted: str
+    current_field_text: str
+
+
 def _log_history(entry: Dict[str, Any]) -> None:
     global last_finalized_transcript
     last_finalized_transcript = entry.get("transcript", "")
@@ -228,13 +247,17 @@ async def stop_dictation(
         final_text = in_place_edit["corrected"]
         replacements = in_place_edit.get("replacements", [])
         tone = in_place_edit.get("tone", tone)
-    elif apply_dictionary:
-        dict_res = dictionary.apply(raw_transcript, tone=tone, apply_snippets=apply_snippets)
-        final_text = dict_res["corrected"]
-        replacements = dict_res["replacements"]
     else:
-        final_text = raw_transcript
-        replacements = []
+        # Wispr Flow intelligence pass: self-correction, stutter removal, disfluency cleanup, structure
+        intel_cleaned = flow_intel.correct_transcript(raw_transcript, strength="full")
+        intel_cleaned = flow_intel.detect_structure(intel_cleaned)
+        if apply_dictionary:
+            dict_res = dictionary.apply(intel_cleaned, tone=tone, apply_snippets=apply_snippets)
+            final_text = dict_res["corrected"]
+            replacements = dict_res["replacements"]
+        else:
+            final_text = intel_cleaned
+            replacements = []
 
     intent_prediction = flow_intel.predict_and_adapt_intent(final_text)
     flow_intel.add_transcription(final_text, latency_ms=stt_res.get("latency_ms", 0))
@@ -478,6 +501,69 @@ async def bridge_dispatch_to_swarm(req: BridgeDispatchRequest) -> Dict[str, Any]
             "dispatched": False,
             "error": f"Could not reach CLI-Workflow at {CLI_WORKFLOW_URL}: {str(e)}",
         }
+
+
+@app.post("/api/flow/correct")
+async def flow_correct_endpoint(req: FlowCorrectRequest) -> Dict[str, Any]:
+    """Runs multi-stage intelligence pass: self-correction, disfluency, structure, and app tone."""
+    cleaned = flow_intel.correct_transcript(
+        req.text,
+        context=req.context,
+        prosody_hints=req.prosody_hints,
+        strength=req.correction_strength,
+    )
+    structured = flow_intel.detect_structure(cleaned)
+    adapted = flow_intel.app_tone_adaptation(structured, req.app_id)
+    return {
+        "success": True,
+        "original": req.text,
+        "corrected": adapted,
+        "strength": req.correction_strength,
+        "app_id": req.app_id,
+    }
+
+
+@app.post("/api/command/apply")
+async def apply_command_endpoint(req: CommandApplyRequest) -> Dict[str, Any]:
+    """Voice-driven editing of selected text with inline diff preview."""
+    res = flow_intel.apply_command(
+        req.selected_text,
+        req.instruction,
+        surrounding_context=req.surrounding_context,
+    )
+    return res
+
+
+@app.post("/api/dictionary/auto-add")
+async def auto_add_watcher_endpoint(req: AutoAddWatcherRequest) -> Dict[str, Any]:
+    """Captures post-paste edits to automatically add homophone corrections."""
+    res = dictionary.detect_post_paste_correction(req.original_inserted, req.current_field_text)
+    return {
+        "success": bool(res),
+        "detected_correction": res,
+    }
+
+
+@app.get("/api/app-profiles")
+async def get_app_profiles_endpoint() -> Dict[str, Any]:
+    """Returns app tone directives for IDEs, email clients, and chat apps."""
+    return {
+        "profiles": {
+            "code": {
+                "apps": ["VS Code", "Cursor", "Terminal", "PyCharm", "IntelliJ"],
+                "directives": "Code-comment syntax, symbol translation active, variable identifiers preserved",
+            },
+            "formal": {
+                "apps": ["Gmail", "Outlook", "Thunderbird"],
+                "directives": "Formal tone, complete sentences, professional punctuation",
+            },
+            "casual": {
+                "apps": ["Slack", "Discord", "Teams", "iMessage"],
+                "directives": "Concise, conversational, short sentences",
+            },
+        }
+    }
+
 
 
 # Serve static web interface

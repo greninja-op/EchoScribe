@@ -1,36 +1,128 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "words": {
-    "fast api": "FastAPI",
-    "fastapi": "FastAPI",
-    "git hub": "GitHub",
-    "github": "GitHub",
-    "open ai": "OpenAI",
-    "openai": "OpenAI",
-    "whisper": "Whisper",
-    "wispr flow": "Wispr Flow",
-    "wispr": "Wispr",
-    "docker compose": "docker-compose",
-    "k eight s": "k8s",
-    "kubernetes": "Kubernetes",
-    "typescript": "TypeScript",
-    "javascript": "JavaScript",
-    "async await": "async/await",
-    "next js": "Next.js",
-    "nextjs": "Next.js",
-    "vue js": "Vue.js",
-    "node js": "Node.js",
-    "tailwind css": "TailwindCSS",
-    "powershell": "PowerShell",
-    "py test": "pytest",
-    "pytest": "pytest",
-    "pydantic": "Pydantic",
-    "uvicorn": "Uvicorn",
-    "echoscribe": "EchoScribe",
-    "echo scribe": "EchoScribe",
-    "bridgemind": "BridgeMind",
-    "bridge mind": "BridgeMind",
-    "tauri": "Tauri"
+    "fast api": {
+      "replacement": "FastAPI",
+      "category": "auto-learned",
+      "added_via": "auto",
+      "first_seen": 1788391934.501831
+    },
+    "fastapi": {
+      "replacement": "FastAPI",
+      "category": "code"
+    },
+    "git hub": {
+      "replacement": "GitHub",
+      "category": "code"
+    },
+    "github": {
+      "replacement": "GitHub",
+      "category": "code"
+    },
+    "open ai": {
+      "replacement": "OpenAI",
+      "category": "code"
+    },
+    "openai": {
+      "replacement": "OpenAI",
+      "category": "code"
+    },
+    "whisper": {
+      "replacement": "Whisper",
+      "category": "code"
+    },
+    "wispr flow": {
+      "replacement": "Wispr Flow",
+      "category": "code"
+    },
+    "wispr": {
+      "replacement": "Wispr",
+      "category": "code"
+    },
+    "docker compose": {
+      "replacement": "docker-compose",
+      "category": "code"
+    },
+    "k eight s": {
+      "replacement": "k8s",
+      "category": "code"
+    },
+    "kubernetes": {
+      "replacement": "Kubernetes",
+      "category": "code"
+    },
+    "typescript": {
+      "replacement": "TypeScript",
+      "category": "code"
+    },
+    "javascript": {
+      "replacement": "JavaScript",
+      "category": "code"
+    },
+    "async await": {
+      "replacement": "async/await",
+      "category": "code"
+    },
+    "next js": {
+      "replacement": "Next.js",
+      "category": "code"
+    },
+    "nextjs": {
+      "replacement": "Next.js",
+      "category": "code"
+    },
+    "vue js": {
+      "replacement": "Vue.js",
+      "category": "code"
+    },
+    "node js": {
+      "replacement": "Node.js",
+      "category": "code"
+    },
+    "tailwind css": {
+      "replacement": "TailwindCSS",
+      "category": "code"
+    },
+    "powershell": {
+      "replacement": "PowerShell",
+      "category": "code"
+    },
+    "py test": {
+      "replacement": "pytest",
+      "category": "code"
+    },
+    "pytest": {
+      "replacement": "pytest",
+      "category": "code"
+    },
+    "pydantic": {
+      "replacement": "Pydantic",
+      "category": "code"
+    },
+    "uvicorn": {
+      "replacement": "Uvicorn",
+      "category": "code"
+    },
+    "echoscribe": {
+      "replacement": "EchoScribe",
+      "category": "code"
+    },
+    "echo scribe": {
+      "replacement": "EchoScribe",
+      "category": "code"
+    },
+    "bridgemind": {
+      "replacement": "BridgeMind",
+      "category": "code"
+    },
+    "bridge mind": {
+      "replacement": "BridgeMind",
+      "category": "code"
+    },
+    "tauri": {
+      "replacement": "Tauri",
+      "category": "code"
+    }
   },
   "patterns": [
     {

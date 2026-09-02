@@ -18,6 +18,9 @@ class EchoScribeApp {
     this.activeAppTarget = "VS Code";
     this.dictionaryData = {};
     this.activeArtifactMode = "corrected"; // "corrected" or "raw"
+    this.correctionStrength = "full";
+    this.pendingCommandReplacement = "";
+    this.pendingCommandTargetEl = null;
 
     this.initElements();
     this.initEvents();
@@ -27,6 +30,8 @@ class EchoScribeApp {
   initElements() {
     // Window Topbar
     this.toneSwitcher = document.getElementById("toneSwitcher");
+    this.btnCommandMode = document.getElementById("btnCommandMode");
+    this.correctionStrengthSelect = document.getElementById("correctionStrengthSelect");
     this.bridgeToggleBtn = document.getElementById("bridgeToggleBtn");
     this.openDictionaryTopBtn = document.getElementById("openDictionaryTopBtn");
     this.openPaletteBtn = document.getElementById("openPaletteBtn");
@@ -59,6 +64,12 @@ class EchoScribeApp {
     this.dispatchSwarmBtn = document.getElementById("dispatchSwarmBtn");
     this.suggestionsChipsRow = document.getElementById("suggestionsChipsRow");
 
+    // Command Mode Diff Elements
+    this.commandDiffContainer = document.getElementById("commandDiffContainer");
+    this.commandDiffBody = document.getElementById("commandDiffBody");
+    this.btnDiscardCommand = document.getElementById("btnDiscardCommand");
+    this.btnAcceptCommand = document.getElementById("btnAcceptCommand");
+
     // Universal Right-Panel Artifact Viewer
     this.rightPanel = document.getElementById("rightArtifactPanel");
     this.btnArtifactCorrected = document.getElementById("btnArtifactCorrected");
@@ -87,6 +98,10 @@ class EchoScribeApp {
     });
 
     // Topbar Actions
+    this.btnCommandMode?.addEventListener("click", () => this.triggerCommandMode());
+    this.correctionStrengthSelect?.addEventListener("change", (e) => {
+      this.correctionStrength = e.target.value;
+    });
     this.openDictionaryTopBtn?.addEventListener("click", () => this.openDictionaryArtifact());
     this.btnNavDictionary?.addEventListener("click", () => this.openDictionaryArtifact());
     this.bridgeToggleBtn?.addEventListener("click", () => this.toggleSwarmBridge());
@@ -101,6 +116,8 @@ class EchoScribeApp {
     this.composerMicBtn?.addEventListener("click", () => this.toggleRecording());
     this.copyLatestBtn?.addEventListener("click", () => this.copyLatestTranscript());
     this.dispatchSwarmBtn?.addEventListener("click", () => this.dispatchLatestToSwarm());
+    this.btnDiscardCommand?.addEventListener("click", () => this.discardCommandEdit());
+    this.btnAcceptCommand?.addEventListener("click", () => this.acceptCommandEdit());
 
     // Right-Panel Controls
     this.btnArtifactClose?.addEventListener("click", () => this.closeArtifact());
@@ -109,7 +126,7 @@ class EchoScribeApp {
     this.btnArtifactRaw?.addEventListener("click", () => this.setArtifactMode("raw"));
     this.btnArtifactCopy?.addEventListener("click", () => this.copyDictionary());
 
-    // Global Hotkeys: Spacebar (Hold-to-talk) & ⌘K
+    // Global Hotkeys: Spacebar (Hold-to-talk), ⌘K, Alt+C
     let spaceDown = false;
     window.addEventListener("keydown", (e) => {
       // ⌘K or Ctrl+K opens palette
@@ -119,10 +136,18 @@ class EchoScribeApp {
         return;
       }
 
-      // Escape closes palette or artifact
+      // Alt+C toggles Command Mode
+      if (e.altKey && e.key.toLowerCase() === "c") {
+        e.preventDefault();
+        this.triggerCommandMode();
+        return;
+      }
+
+      // Escape closes palette, artifact, or diff preview
       if (e.key === "Escape") {
         this.closePalette();
         this.closeArtifact();
+        this.discardCommandEdit();
         return;
       }
 
@@ -274,6 +299,83 @@ class EchoScribeApp {
     } catch (e) {
       console.warn("Direct Swarm dispatch fallback notice:", e);
     }
+  }
+
+  // ==========================================
+  // COMMAND MODE (VOICE-DRIVEN EDITING)
+  // ==========================================
+
+  async triggerCommandMode() {
+    let targetText = "";
+    let targetEl = null;
+
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim()) {
+      targetText = selection.toString().trim();
+      targetEl = selection.anchorNode.parentElement;
+    } else {
+      const turns = this.conversationThread.querySelectorAll(".dictation-turn p");
+      if (turns.length > 0) {
+        targetEl = turns[turns.length - 1];
+        targetText = targetEl.innerText.trim();
+      }
+    }
+
+    if (!targetText) {
+      alert("Please select text or dictate an entry to use Command Mode.");
+      return;
+    }
+
+    const instruction = prompt(
+      `⚡ Command Mode\nTarget: "${targetText.slice(0, 40)}..."\n\nEnter voice/edit instruction:\n(e.g. 'make this concise', 'format as bullet points', 'fix grammar', 'formal tone')`,
+      "make this more concise"
+    );
+
+    if (!instruction || !instruction.trim()) return;
+
+    try {
+      const res = await fetch("/api/command/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          selected_text: targetText,
+          instruction: instruction.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        this.pendingCommandReplacement = data.replacement;
+        this.pendingCommandTargetEl = targetEl;
+        this.commandDiffBody.innerHTML = data.diff_html;
+        this.commandDiffContainer.style.display = "flex";
+      } else {
+        alert("Command edit error: " + (data.error || "Unknown"));
+      }
+    } catch (e) {
+      alert("Command Mode request failed: " + e);
+    }
+  }
+
+  acceptCommandEdit() {
+    if (this.pendingCommandTargetEl && this.pendingCommandReplacement) {
+      this.pendingCommandTargetEl.innerText = this.pendingCommandReplacement;
+      // Post-paste auto add watcher simulation
+      fetch("/api/dictionary/auto-add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          original_inserted: this.pendingCommandTargetEl.innerText,
+          current_field_text: this.pendingCommandReplacement
+        })
+      }).catch(() => {});
+    }
+    this.discardCommandEdit();
+  }
+
+  discardCommandEdit() {
+    this.commandDiffContainer.style.display = "none";
+    this.pendingCommandReplacement = "";
+    this.pendingCommandTargetEl = null;
   }
 
   // ==========================================

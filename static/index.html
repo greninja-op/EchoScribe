@@ -28,6 +28,15 @@
     </nav>
 
     <div class="topbar-right">
+      <button class="icon-nav-btn" id="btnCommandMode" title="Command Mode: Voice-driven edit of selected text (Alt+C)">
+        <span>⚡ Command Mode</span>
+        <kbd class="kbd-meta">Alt+C</kbd>
+      </button>
+      <select id="correctionStrengthSelect" class="strength-select" title="Correction Strength">
+        <option value="full" selected>Full Correction</option>
+        <option value="light">Light (Stutters)</option>
+        <option value="off">Off (Literal ASR)</option>
+      </select>
       <button class="icon-nav-btn active" id="bridgeToggleBtn" title="Swarm Bridge Armed">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
         <span>Swarm Bridge</span>
@@ -154,6 +163,18 @@
           <span class="context-tone-name" id="currentToneLabel">Tone: Clean</span>
           <span class="context-divider">·</span>
           <span class="context-egress" id="currentEgressLabel">0 bytes egress (Air-Gapped)</span>
+        </div>
+
+        <!-- Command Mode Inline Diff Preview (Wispr Flow Edit Review) -->
+        <div class="command-diff-container" id="commandDiffContainer" style="display: none;">
+          <div class="command-diff-header">
+            <span class="diff-title-badge">⚡ Command Edit Diff</span>
+            <div class="diff-actions">
+              <button type="button" class="diff-action-btn cancel" id="btnDiscardCommand">Discard</button>
+              <button type="button" class="diff-action-btn accept" id="btnAcceptCommand">Accept Edit</button>
+            </div>
+          </div>
+          <div class="command-diff-body" id="commandDiffBody"></div>
         </div>
 
         <!-- Integrated Pill Input with Embedded Mic -->
