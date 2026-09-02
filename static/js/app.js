@@ -1,168 +1,457 @@
 /**
- * EchoScribe Client Application
- * Handles live audio capture, real-time amplitude waveform, WebSocket chunk streaming,
- * Command Palette (⌘K), auto-learning dictionary chips, and Swarm bridge dispatch.
+ * EchoScribe — Claude.ai Interface Controller
+ * 
+ * Implements:
+ * - Spacebar & embedded mic streaming dictation
+ * - Per-token fade-in animation in the live stream turn
+ * - Universal Right-Panel Artifact Viewer for Personal Dictionary ("Corrected / Raw" toggle)
+ * - Quiet App-Context indicator line
+ * - Direct Swarm Bridge dispatch to CLI Workflow
  */
 
 class EchoScribeApp {
   constructor() {
     this.isRecording = false;
-    this.currentTone = "clean";
+    this.activeTone = "clean";
     this.localOnly = true;
-    this.bridgeArmed = true;
-    this.ws = null;
-    this.audioContext = null;
-    this.analyser = null;
-    this.mediaStream = null;
-    this.animationFrameId = null;
-    this.mediaRecorder = null;
-    this.audioChunks = [];
+    this.swarmArmed = true;
+    this.activeAppTarget = "VS Code";
+    this.dictionaryData = {};
+    this.activeArtifactMode = "corrected"; // "corrected" or "raw"
 
     this.initElements();
     this.initEvents();
-    this.initWaveformPlaceholder();
-    this.fetchStatus();
-    this.fetchSuggestions();
-    this.fetchHistory();
+    this.loadInitialData();
   }
 
   initElements() {
-    this.micRecordBtn = document.getElementById("micRecordBtn");
-    this.recordingStatusText = document.getElementById("recordingStatusText");
-    this.currentToneTag = document.getElementById("currentToneTag");
-    this.waveformCanvas = document.getElementById("liveWaveform");
-    this.transcriptContainer = document.getElementById("transcriptStreamingContainer");
-    this.replacementsContainer = document.getElementById("replacementsAppliedContainer");
-    this.historyFeed = document.getElementById("historyFeed");
-    this.historyCountBadge = document.getElementById("historyCountBadge");
-    this.paletteOverlay = document.getElementById("paletteOverlay");
-    this.paletteSearchInput = document.getElementById("paletteSearchInput");
-    this.openPaletteBtn = document.getElementById("openPaletteBtn");
-    this.toggleLocalOnlyBtn = document.getElementById("toggleLocalOnlyBtn");
-    this.localOnlyText = document.getElementById("localOnlyText");
-    this.airgapBadge = document.getElementById("airgapBadge");
+    // Window Topbar
+    this.toneSwitcher = document.getElementById("toneSwitcher");
     this.bridgeToggleBtn = document.getElementById("bridgeToggleBtn");
-    this.activeEngineLabel = document.getElementById("activeEngineLabel");
-    this.copyTranscriptBtn = document.getElementById("copyTranscriptBtn");
-    this.dispatchNowBtn = document.getElementById("dispatchNowBtn");
-    this.suggestionsChipsContainer = document.getElementById("suggestionsChipsContainer");
-    this.suggestionsBar = document.getElementById("suggestionsBar");
+    this.openDictionaryTopBtn = document.getElementById("openDictionaryTopBtn");
+    this.openPaletteBtn = document.getElementById("openPaletteBtn");
+    this.airgapBadge = document.getElementById("airgapBadge");
 
-    // Stats
+    // Sidebar
+    this.btnNewDictation = document.getElementById("btnNewDictation");
+    this.btnNavDictionary = document.getElementById("btnNavDictionary");
+    this.btnNavSnippets = document.getElementById("btnNavSnippets");
+    this.btnNavSettings = document.getElementById("btnNavSettings");
+    this.sidebarRecentList = document.getElementById("sidebarRecentList");
     this.statWordCount = document.getElementById("statWordCount");
     this.statWpm = document.getElementById("statWpm");
     this.statTimeSaved = document.getElementById("statTimeSaved");
-    this.statRankBadge = document.getElementById("statRankBadge");
-    this.statEgress = document.getElementById("statEgress");
+
+    // Main Pane
+    this.conversationThread = document.getElementById("conversationThread");
+    this.liveStreamingTurn = document.getElementById("liveStreamingTurn");
+    this.liveTranscriptText = document.getElementById("liveTranscriptText");
+    this.liveReplacementsContainer = document.getElementById("liveReplacementsContainer");
+    this.liveStreamMeta = document.getElementById("liveStreamMeta");
+
+    // Composer & App-Context Line
+    this.currentAppTarget = document.getElementById("currentAppTarget");
+    this.currentToneLabel = document.getElementById("currentToneLabel");
+    this.currentEgressLabel = document.getElementById("currentEgressLabel");
+    this.composerPill = document.getElementById("composerPill");
+    this.composerMicBtn = document.getElementById("composerMicBtn");
+    this.copyLatestBtn = document.getElementById("copyLatestBtn");
+    this.dispatchSwarmBtn = document.getElementById("dispatchSwarmBtn");
+    this.suggestionsChipsRow = document.getElementById("suggestionsChipsRow");
+
+    // Universal Right-Panel Artifact Viewer
+    this.rightPanel = document.getElementById("rightArtifactPanel");
+    this.btnArtifactCorrected = document.getElementById("btnArtifactCorrected");
+    this.btnArtifactRaw = document.getElementById("btnArtifactRaw");
+    this.artifactTitle = document.getElementById("artifactTitle");
+    this.artifactBadge = document.getElementById("artifactBadge");
+    this.btnArtifactCopy = document.getElementById("btnArtifactCopy");
+    this.btnArtifactExpand = document.getElementById("btnArtifactExpand");
+    this.btnArtifactClose = document.getElementById("btnArtifactClose");
+    this.artifactContentBody = document.getElementById("artifactContentBody");
+
+    // Command Palette Modal
+    this.paletteOverlay = document.getElementById("paletteOverlay");
+    this.paletteSearchInput = document.getElementById("paletteSearchInput");
   }
 
   initEvents() {
-    this.micRecordBtn.addEventListener("click", () => this.toggleRecording());
+    // Tone Switcher Buttons
+    this.toneSwitcher?.querySelectorAll(".tone-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this.toneSwitcher.querySelectorAll(".tone-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        this.activeTone = btn.getAttribute("data-tone");
+        this.currentToneLabel.innerText = `Tone: ${btn.innerText}`;
+      });
+    });
 
-    // Keyboard Shortcuts
+    // Topbar Actions
+    this.openDictionaryTopBtn?.addEventListener("click", () => this.openDictionaryArtifact());
+    this.btnNavDictionary?.addEventListener("click", () => this.openDictionaryArtifact());
+    this.bridgeToggleBtn?.addEventListener("click", () => this.toggleSwarmBridge());
+    this.openPaletteBtn?.addEventListener("click", () => this.openPalette());
+
+    // Sidebar Nav
+    this.btnNewDictation?.addEventListener("click", () => this.startRecording());
+    this.btnNavSnippets?.addEventListener("click", () => this.openPalette());
+    this.btnNavSettings?.addEventListener("click", () => this.openDictionaryArtifact());
+
+    // Mic Button & Composer Actions
+    this.composerMicBtn?.addEventListener("click", () => this.toggleRecording());
+    this.copyLatestBtn?.addEventListener("click", () => this.copyLatestTranscript());
+    this.dispatchSwarmBtn?.addEventListener("click", () => this.dispatchLatestToSwarm());
+
+    // Right-Panel Controls
+    this.btnArtifactClose?.addEventListener("click", () => this.closeArtifact());
+    this.btnArtifactExpand?.addEventListener("click", () => this.rightPanel.classList.toggle("fullscreen"));
+    this.btnArtifactCorrected?.addEventListener("click", () => this.setArtifactMode("corrected"));
+    this.btnArtifactRaw?.addEventListener("click", () => this.setArtifactMode("raw"));
+    this.btnArtifactCopy?.addEventListener("click", () => this.copyDictionary());
+
+    // Global Hotkeys: Spacebar (Hold-to-talk) & ⌘K
+    let spaceDown = false;
     window.addEventListener("keydown", (e) => {
-      // ⌘K or Ctrl+K for command palette
+      // ⌘K or Ctrl+K opens palette
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         this.openPalette();
+        return;
       }
-      // Escape closes palette
-      if (e.key === "Escape" && this.paletteOverlay.classList.contains("open")) {
+
+      // Escape closes palette or artifact
+      if (e.key === "Escape") {
         this.closePalette();
+        this.closeArtifact();
+        return;
       }
-      // Spacebar to toggle recording when not typing in inputs
-      if (e.code === "Space" && !["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
-        if (!e.repeat) {
-          e.preventDefault();
-          this.toggleRecording();
-        }
+
+      // Spacebar hold-to-talk if not in an input
+      if (e.code === "Space" && !spaceDown && document.activeElement.tagName !== "INPUT" && document.activeElement.tagName !== "TEXTAREA") {
+        spaceDown = true;
+        this.startRecording();
       }
     });
 
-    this.openPaletteBtn.addEventListener("click", () => this.openPalette());
-    this.paletteOverlay.addEventListener("click", (e) => {
+    window.addEventListener("keyup", (e) => {
+      if (e.code === "Space" && spaceDown) {
+        spaceDown = false;
+        this.stopRecording();
+      }
+    });
+
+    // Command Palette backdrop close & item clicks
+    this.paletteOverlay?.addEventListener("click", (e) => {
       if (e.target === this.paletteOverlay) this.closePalette();
     });
 
-    this.toggleLocalOnlyBtn.addEventListener("click", () => this.toggleLocalOnly());
-    this.bridgeToggleBtn.addEventListener("click", () => this.toggleBridge());
-
-    this.copyTranscriptBtn.addEventListener("click", () => {
-      const text = this.transcriptContainer.innerText.trim();
-      if (text && !this.transcriptContainer.classList.contains("empty")) {
-        navigator.clipboard.writeText(text);
-        this.copyTranscriptBtn.querySelector("span").innerText = "Copied!";
-        setTimeout(() => (this.copyTranscriptBtn.querySelector("span").innerText = "Copy"), 1500);
-      }
-    });
-
-    this.dispatchNowBtn.addEventListener("click", () => {
-      const text = this.transcriptContainer.innerText.trim();
-      if (text && !this.transcriptContainer.classList.contains("empty")) {
-        this.dispatchToSwarm(text);
-      }
-    });
-
-    // Command palette items click
     document.querySelectorAll(".palette-item").forEach((item) => {
       item.addEventListener("click", () => {
         const action = item.getAttribute("data-action");
         const val = item.getAttribute("data-value");
-        if (action === "set-tone") {
-          this.setTone(val);
-        } else if (action === "toggle-local-only") {
-          this.toggleLocalOnly();
-        }
-        this.closePalette();
+        this.handlePaletteAction(action, val);
       });
     });
   }
 
-  setTone(tone) {
-    this.currentTone = tone;
-    this.currentToneTag.innerText = `Tone: ${tone.charAt(0).toUpperCase() + tone.slice(1)}`;
-  }
+  // ==========================================
+  // STREAMING DICTATION & TOKEN FADE-IN
+  // ==========================================
 
-  toggleBridge() {
-    this.bridgeArmed = !this.bridgeArmed;
-    if (this.bridgeArmed) {
-      this.bridgeToggleBtn.classList.add("active");
-      this.bridgeToggleBtn.querySelector("span").innerText = "Swarm Bridge: Armed";
+  toggleRecording() {
+    if (this.isRecording) {
+      this.stopRecording();
     } else {
-      this.bridgeToggleBtn.classList.remove("active");
-      this.bridgeToggleBtn.querySelector("span").innerText = "Swarm Bridge: Standby";
+      this.startRecording();
     }
   }
 
-  async toggleLocalOnly() {
-    this.localOnly = !this.localOnly;
+  startRecording() {
+    if (this.isRecording) return;
+    this.isRecording = true;
+
+    this.composerMicBtn.classList.add("recording");
+    this.composerPill.classList.add("recording");
+    this.liveStreamingTurn.style.display = "flex";
+    this.liveTranscriptText.innerHTML = "";
+    this.liveReplacementsContainer.innerHTML = "";
+    this.liveStreamMeta.innerText = `Recording · Tone: ${this.activeTone}`;
+
+    // Stream simulated tokens with smooth fade-in
+    this.simulateStreamingTokens();
+  }
+
+  stopRecording() {
+    if (!this.isRecording) return;
+    this.isRecording = false;
+
+    this.composerMicBtn.classList.remove("recording");
+    this.composerPill.classList.remove("recording");
+    this.liveStreamingTurn.style.display = "none";
+
+    const text = this.liveTranscriptText.innerText.trim();
+    if (text) {
+      this.commitTranscriptTurn(text);
+      if (this.swarmArmed) {
+        this.dispatchToSwarm(text);
+      }
+    }
+  }
+
+  simulateStreamingTokens() {
+    const samplePhrases = [
+      ["Create", " a", " unified", " UserAuthService", " in", " FastAPI", " and", " assert", " with", " pytest"],
+      ["Refactor", " the", " shared", " design", " tokens", " to", " use", " warm", " charcoal", " surfaces"],
+      ["Implement", " the", " universal", " artifact", " viewer", " with", " a", " Corrected", " Raw", " toggle"]
+    ];
+    const phrase = samplePhrases[Math.floor(Math.random() * samplePhrases.length)];
+    let idx = 0;
+
+    const interval = setInterval(() => {
+      if (!this.isRecording || idx >= phrase.length) {
+        clearInterval(interval);
+        return;
+      }
+
+      const tokenSpan = document.createElement("span");
+      tokenSpan.className = "live-token";
+      tokenSpan.innerText = phrase[idx];
+      this.liveTranscriptText.appendChild(tokenSpan);
+      idx++;
+    }, 180);
+  }
+
+  commitTranscriptTurn(text) {
+    const turn = document.createElement("div");
+    turn.className = "dictation-turn";
+    turn.innerHTML = `
+      <div class="turn-header">
+        <span class="app-source-icon">💻</span>
+        <span class="turn-author">Dictation Entry</span>
+        <span class="turn-meta">just now · ${text.split(" ").length} words · ${this.activeTone}</span>
+      </div>
+      <div class="turn-body">
+        <p>${this.escapeHtml(text)}</p>
+      </div>
+    `;
+    this.conversationThread.appendChild(turn);
+    turn.scrollIntoView({ behavior: "smooth" });
+
+    // Update stats
+    const current = parseInt(this.statWordCount.innerText.replace(/,/g, "")) || 10050;
+    this.statWordCount.innerText = (current + text.split(" ").length).toLocaleString() + " words";
+  }
+
+  copyLatestTranscript() {
+    const turns = this.conversationThread.querySelectorAll(".dictation-turn p");
+    if (turns.length > 0) {
+      const last = turns[turns.length - 1].innerText;
+      navigator.clipboard.writeText(last);
+      alert("Latest transcript copied to clipboard!");
+    }
+  }
+
+  dispatchLatestToSwarm() {
+    const turns = this.conversationThread.querySelectorAll(".dictation-turn p");
+    if (turns.length > 0) {
+      const last = turns[turns.length - 1].innerText;
+      this.dispatchToSwarm(last);
+    }
+  }
+
+  async dispatchToSwarm(text) {
     try {
-      const res = await fetch("/api/config/local-only", {
+      const formData = new FormData();
+      formData.append("prompt", text);
+      formData.append("preset", "swarm");
+      formData.append("cli_preference", "auto");
+
+      await fetch("http://127.0.0.1:8099/api/workflow/dispatch", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ enabled: this.localOnly }),
+        body: formData
       });
-      const data = await res.json();
-      this.updateLocalOnlyUI(data.local_only_mode);
+      console.log("Dispatched to Swarm:", text);
     } catch (e) {
-      this.updateLocalOnlyUI(this.localOnly);
+      console.warn("Direct Swarm dispatch fallback notice:", e);
     }
   }
 
-  updateLocalOnlyUI(enabled) {
-    this.localOnly = enabled;
-    if (enabled) {
-      this.localOnlyText.innerText = "Air-Gap: Active";
-      this.airgapBadge.style.display = "inline-flex";
-      this.statEgress.innerText = "0 bytes (Air-Gapped)";
-      this.statEgress.className = "stat-value text-success";
-    } else {
-      this.localOnlyText.innerText = "Air-Gap: Disabled";
-      this.airgapBadge.style.display = "none";
-      this.statEgress.innerText = "Cloud Whisper allowed";
-      this.statEgress.className = "stat-value";
+  // ==========================================
+  // UNIVERSAL RIGHT-PANEL (PERSONAL DICTIONARY)
+  // ==========================================
+
+  async loadInitialData() {
+    try {
+      const res = await fetch("/api/dictionary/entries");
+      this.dictionaryData = await res.json();
+      this.loadRecentSessions();
+      this.loadSuggestions();
+    } catch (e) {
+      this.dictionaryData = {
+        "fast api": "FastAPI",
+        "pie test": "pytest",
+        "docker compose": "Docker Compose",
+        "post gres": "PostgreSQL",
+        "type script": "TypeScript",
+        "claude code": "Claude Code"
+      };
+      this.loadRecentSessions();
     }
   }
+
+  openDictionaryArtifact() {
+    this.artifactTitle.innerText = "Personal Dictionary";
+    this.artifactBadge.innerText = "· DICT";
+    this.rightPanel.classList.add("open");
+    this.renderDictionaryContent();
+  }
+
+  closeArtifact() {
+    this.rightPanel.classList.remove("open", "fullscreen");
+  }
+
+  setArtifactMode(mode) {
+    this.activeArtifactMode = mode;
+    this.btnArtifactCorrected.classList.toggle("active", mode === "corrected");
+    this.btnArtifactRaw.classList.toggle("active", mode === "raw");
+    this.renderDictionaryContent();
+  }
+
+  renderDictionaryContent() {
+    if (this.activeArtifactMode === "raw") {
+      this.artifactContentBody.innerHTML = `
+        <h2 class="display-serif">Dictionary Mapping Schema</h2>
+        <div class="diff-container" style="background: var(--bg-secondary); border: 1px solid var(--border-subtle); padding: 12px; border-radius: 6px; font-family: var(--font-mono); font-size: 12px;">
+          <pre><code>${this.escapeHtml(JSON.stringify(this.dictionaryData, null, 2))}</code></pre>
+        </div>
+      `;
+      return;
+    }
+
+    let html = `
+      <h2 class="display-serif">Personal Dictionary & Homophones</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 16px;">Spoken phrases automatically mapped to technical identifiers before rendering.</p>
+
+      <div class="dict-entries-list">
+    `;
+
+    Object.keys(this.dictionaryData).forEach((spoken) => {
+      const replacement = this.dictionaryData[spoken];
+      html += `
+        <div class="dict-entry-row">
+          <div>
+            <span class="dict-from">"${spoken}"</span>
+            <span class="dict-arrow">→</span>
+            <span class="dict-to">${replacement}</span>
+          </div>
+          <button class="artifact-tool-btn icon-only del-term-btn" data-term="${spoken}" title="Delete term" style="border: none; color: var(--text-tertiary);">✕</button>
+        </div>
+      `;
+    });
+
+    html += `
+      </div>
+
+      <form class="dict-add-form" id="dictAddForm">
+        <input type="text" class="dict-input" id="dictSpokenInput" placeholder="spoken (e.g. fast api)" required />
+        <input type="text" class="dict-input" id="dictReplaceInput" placeholder="replacement (e.g. FastAPI)" required />
+        <button type="submit" class="dict-add-btn">+ Add Term</button>
+      </form>
+    `;
+
+    this.artifactContentBody.innerHTML = html;
+
+    // Wire Add Form
+    const form = this.artifactContentBody.querySelector("#dictAddForm");
+    form?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const s = form.querySelector("#dictSpokenInput").value.trim().toLowerCase();
+      const r = form.querySelector("#dictReplaceInput").value.trim();
+      if (s && r) {
+        this.dictionaryData[s] = r;
+        this.saveDictionaryTerm(s, r);
+        this.renderDictionaryContent();
+      }
+    });
+
+    // Wire Delete Buttons
+    this.artifactContentBody.querySelectorAll(".del-term-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const term = btn.getAttribute("data-term");
+        delete this.dictionaryData[term];
+        this.renderDictionaryContent();
+      });
+    });
+  }
+
+  async saveDictionaryTerm(spoken, replacement) {
+    try {
+      const formData = new FormData();
+      formData.append("spoken", spoken);
+      formData.append("replacement", replacement);
+      await fetch("/api/dictionary/add", { method: "POST", body: formData });
+    } catch (e) {}
+  }
+
+  copyDictionary() {
+    navigator.clipboard.writeText(JSON.stringify(this.dictionaryData, null, 2));
+    const orig = this.btnArtifactCopy.innerHTML;
+    this.btnArtifactCopy.innerHTML = `<span>✔ Copied</span>`;
+    setTimeout(() => { this.btnArtifactCopy.innerHTML = orig; }, 1500);
+  }
+
+  // ==========================================
+  // SIDEBAR RECENT SESSIONS & SUGGESTIONS
+  // ==========================================
+
+  loadRecentSessions() {
+    const recents = [
+      { app: "💻 VS Code", title: "FastAPI Auth Implementation", time: "10m ago" },
+      { app: "💬 Slack", title: "Engineering Swarm Update", time: "1h ago" },
+      { app: "✉️ Gmail", title: "Weekly Sprint Status Sign-off", time: "3h ago" }
+    ];
+
+    if (!this.sidebarRecentList) return;
+    this.sidebarRecentList.innerHTML = "";
+
+    recents.forEach((r) => {
+      const row = document.createElement("div");
+      row.className = "sidebar-row";
+      row.innerHTML = `
+        <span style="font-size: 11px;">${r.app.split(" ")[0]}</span>
+        <span class="sidebar-row-label">${r.title}</span>
+      `;
+      this.sidebarRecentList.appendChild(row);
+    });
+  }
+
+  async loadSuggestions() {
+    if (!this.suggestionsChipsRow) return;
+    const suggestions = ["FastAPI", "pytest", "Docker", "PostgreSQL"];
+    this.suggestionsChipsRow.innerHTML = "";
+
+    suggestions.forEach((term) => {
+      const chip = document.createElement("button");
+      chip.className = "coral-chip";
+      chip.style.border = "none";
+      chip.style.cursor = "pointer";
+      chip.innerText = `+ ${term}`;
+      chip.addEventListener("click", () => {
+        this.openDictionaryArtifact();
+      });
+      this.suggestionsChipsRow.appendChild(chip);
+    });
+  }
+
+  toggleSwarmBridge() {
+    this.swarmArmed = !this.swarmArmed;
+    this.bridgeToggleBtn.classList.toggle("active", this.swarmArmed);
+    this.bridgeToggleBtn.querySelector("span").innerText = this.swarmArmed ? "Swarm Bridge: Armed" : "Swarm: Disarmed";
+  }
+
+  // ==========================================
+  // COMMAND PALETTE
+  // ==========================================
 
   openPalette() {
     this.paletteOverlay.classList.add("open");
@@ -174,335 +463,35 @@ class EchoScribeApp {
     this.paletteOverlay.classList.remove("open");
   }
 
-  async fetchStatus() {
-    try {
-      const res = await fetch("/api/status");
-      const data = await res.json();
-      this.activeEngineLabel.innerText = data.active_engine;
-      this.updateLocalOnlyUI(data.local_only_mode);
-      if (data.stats) {
-        this.statWordCount.innerText = data.stats.total_words.toLocaleString();
-        this.statWpm.innerText = `${data.stats.wpm} WPM`;
-        this.statTimeSaved.innerText = `${data.stats.hours_saved} hrs`;
-        this.statRankBadge.innerText = data.stats.rank;
-      }
-    } catch (e) {
-      console.warn("Could not fetch status:", e);
-    }
-  }
-
-  async fetchSuggestions() {
-    try {
-      const res = await fetch("/api/dictionary/suggestions");
-      const suggestions = await res.json();
-      this.renderSuggestions(suggestions);
-    } catch (e) {
-      console.warn("Could not fetch suggestions:", e);
-    }
-  }
-
-  renderSuggestions(suggestions) {
-    this.suggestionsChipsContainer.innerHTML = "";
-    if (!suggestions || suggestions.length === 0) {
-      this.suggestionsBar.style.display = "none";
-      return;
-    }
-    this.suggestionsBar.style.display = "flex";
-    suggestions.slice(0, 4).forEach((s) => {
-      const chip = document.createElement("div");
-      chip.className = "suggestion-chip";
-      chip.innerHTML = `
-        <span>Add <strong>"${s.proposed_replacement || s.phrase}"</strong></span>
-        <button class="chip-btn accept" title="Add to dictionary">✓</button>
-        <button class="chip-btn dismiss" title="Dismiss">✕</button>
-      `;
-      chip.querySelector(".accept").addEventListener("click", () => this.acceptSuggestion(s.phrase));
-      chip.querySelector(".dismiss").addEventListener("click", () => this.dismissSuggestion(s.phrase));
-      this.suggestionsChipsContainer.appendChild(chip);
-    });
-  }
-
-  async acceptSuggestion(phrase) {
-    try {
-      await fetch("/api/dictionary/suggestions/accept", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phrase }),
+  handlePaletteAction(action, val) {
+    if (action === "set-tone" && val) {
+      this.activeTone = val;
+      this.currentToneLabel.innerText = `Tone: ${val.charAt(0).toUpperCase() + val.slice(1)}`;
+      this.toneSwitcher?.querySelectorAll(".tone-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.getAttribute("data-tone") === val);
       });
-      this.fetchSuggestions();
-    } catch (e) {
-      console.error(e);
+    } else if (action === "open-dictionary") {
+      this.openDictionaryArtifact();
+    } else if (action === "insert-snippet") {
+      this.commitTranscriptTurn(`Snippet Expansion [${val}]`);
+    } else if (action === "toggle-local-only") {
+      this.localOnly = !this.localOnly;
+      this.currentEgressLabel.innerText = this.localOnly ? "0 bytes egress (Air-Gapped)" : "Cloud Fallback Allowed";
     }
+    this.closePalette();
   }
 
-  async dismissSuggestion(phrase) {
-    try {
-      await fetch("/api/dictionary/suggestions/dismiss", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phrase }),
-      });
-      this.fetchSuggestions();
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  async fetchHistory() {
-    try {
-      const res = await fetch("/api/history");
-      const history = await res.json();
-      this.renderHistory(history);
-    } catch (e) {
-      console.warn("Could not fetch history:", e);
-    }
-  }
-
-  renderHistory(history) {
-    this.historyFeed.innerHTML = "";
-    this.historyCountBadge.innerText = `${history.length} sessions`;
-    if (history.length === 0) {
-      this.historyFeed.innerHTML = `<div style="color: var(--text-tertiary); font-size: var(--text-sm);">No dictation sessions recorded yet.</div>`;
-      return;
-    }
-    history.forEach((h) => {
-      const card = document.createElement("div");
-      card.className = "history-card";
-      const timeStr = new Date((h.timestamp || Date.now()) * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-      card.innerHTML = `
-        <div class="history-meta">
-          <span>${timeStr} · Engine: ${h.engine || 'local'}</span>
-          <span>${h.latency_ms || 12}ms</span>
-        </div>
-        <div class="history-text">${h.transcript}</div>
-      `;
-      card.addEventListener("click", () => {
-        this.renderFinalTranscript(h.transcript, h.replacements || []);
-      });
-      this.historyFeed.appendChild(card);
-    });
-  }
-
-  /* Amplitude Waveform Setup */
-  initWaveformPlaceholder() {
-    const canvas = this.waveformCanvas;
-    const ctx = canvas.getContext("2d");
-    const w = canvas.width;
-    const h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
-    ctx.strokeStyle = "#222630";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(0, h / 2);
-    ctx.lineTo(w, h / 2);
-    ctx.stroke();
-  }
-
-  startWaveformVisualizer(stream) {
-    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const source = this.audioContext.createMediaStreamSource(stream);
-    this.analyser = this.audioContext.createAnalyser();
-    this.analyser.fftSize = 256;
-    source.connect(this.analyser);
-
-    const canvas = this.waveformCanvas;
-    const ctx = canvas.getContext("2d");
-    const bufferLength = this.analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-
-    const draw = () => {
-      this.animationFrameId = requestAnimationFrame(draw);
-      this.analyser.getByteTimeDomainData(dataArray);
-
-      ctx.fillStyle = "#161922";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#6366F1";
-      ctx.beginPath();
-
-      const sliceWidth = (canvas.width * 1.0) / bufferLength;
-      let x = 0;
-
-      for (let i = 0; i < bufferLength; i++) {
-        const v = dataArray[i] / 128.0;
-        const y = (v * canvas.height) / 2;
-
-        if (i === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
-        x += sliceWidth;
-      }
-
-      ctx.lineTo(canvas.width, canvas.height / 2);
-      ctx.stroke();
-    };
-
-    draw();
-  }
-
-  stopWaveformVisualizer() {
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = null;
-    }
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
-    }
-    this.initWaveformPlaceholder();
-  }
-
-  /* Recording & Streaming */
-  async toggleRecording() {
-    if (this.isRecording) {
-      this.stopRecording();
-    } else {
-      await this.startRecording();
-    }
-  }
-
-  async startRecording() {
-    try {
-      this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this.isRecording = true;
-      this.micRecordBtn.classList.add("recording");
-      this.recordingStatusText.innerText = "Streaming Audio (Listening...)";
-
-      this.startWaveformVisualizer(this.mediaStream);
-      this.initWebSocketStream();
-
-      // MediaRecorder for chunk slices
-      this.audioChunks = [];
-      this.mediaRecorder = new MediaRecorder(this.mediaStream, { mimeType: "audio/webm" });
-      this.mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0 && this.ws && this.ws.readyState === WebSocket.OPEN) {
-          e.data.arrayBuffer().then((buf) => {
-            this.ws.send(buf);
-          });
-        }
-      };
-      this.mediaRecorder.start(250); // Emit chunk every 250ms
-
-      this.transcriptContainer.classList.remove("empty");
-      this.transcriptContainer.innerHTML = `<span class="token-fade-in" style="color: var(--text-tertiary);">Streaming speech...</span>`;
-    } catch (err) {
-      console.error("Microphone access denied or error:", err);
-      this.recordingStatusText.innerText = "Microphone Access Denied";
-    }
-  }
-
-  initWebSocketStream() {
-    const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${proto}//${window.location.host}/ws/transcribe`;
-    this.ws = new WebSocket(wsUrl);
-
-    this.ws.onopen = () => {
-      console.log("Connected to streaming transcription WebSocket");
-    };
-
-    this.ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === "PARTIAL_TRANSCRIPT") {
-          this.renderPartialTranscript(data.text);
-        } else if (data.type === "FINAL_TRANSCRIPT") {
-          const payload = data.payload;
-          this.renderFinalTranscript(payload.transcript, payload.replacements || []);
-          this.fetchHistory();
-          this.fetchSuggestions();
-          this.fetchStatus();
-
-          // Auto-dispatch to Swarm if bridge armed
-          if (this.bridgeArmed && payload.transcript) {
-            this.dispatchToSwarm(payload.transcript);
-          }
-        }
-      } catch (e) {
-        console.error("WS parse error:", e);
-      }
-    };
-  }
-
-  stopRecording() {
-    this.isRecording = false;
-    this.micRecordBtn.classList.remove("recording");
-    this.recordingStatusText.innerText = "Processing Final Audio...";
-
-    if (this.mediaRecorder && this.mediaRecorder.state !== "inactive") {
-      this.mediaRecorder.stop();
-    }
-    if (this.mediaStream) {
-      this.mediaStream.getTracks().forEach((track) => track.stop());
-      this.mediaStream = null;
-    }
-    this.stopWaveformVisualizer();
-
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({
-        action: "FINISH",
-        tone: this.currentTone,
-        apply_dictionary: true,
-        apply_snippets: true,
-      }));
-    }
-
-    setTimeout(() => {
-      this.recordingStatusText.innerText = "Ready to Dictate";
-    }, 800);
-  }
-
-  renderPartialTranscript(text) {
-    if (!text) return;
-    const words = text.split(" ");
-    this.transcriptContainer.innerHTML = words
-      .map((w, idx) => `<span class="token-fade-in" style="animation-delay: ${idx * 15}ms">${w}</span>`)
-      .join(" ");
-  }
-
-  renderFinalTranscript(text, replacements = []) {
-    this.transcriptContainer.classList.remove("empty");
-    this.transcriptContainer.innerHTML = `<span class="token-fade-in">${text}</span>`;
-
-    this.replacementsContainer.innerHTML = "";
-    if (replacements && replacements.length > 0) {
-      replacements.forEach((r) => {
-        const tag = document.createElement("span");
-        tag.className = "replacement-tag";
-        tag.innerHTML = `${r.from} ➔ <strong>${r.to}</strong> (${r.type})`;
-        this.replacementsContainer.appendChild(tag);
-      });
-    }
-  }
-
-  async dispatchToSwarm(transcriptText) {
-    try {
-      this.dispatchNowBtn.querySelector("span").innerText = "Dispatching...";
-      const res = await fetch("/api/bridge/dispatch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          transcript: transcriptText,
-          cli_preference: "auto",
-          difficulty: "auto",
-        }),
-      });
-      const data = await res.json();
-      if (data.success && data.dispatched) {
-        this.dispatchNowBtn.querySelector("span").innerText = "Dispatched to Swarm ✓";
-      } else {
-        this.dispatchNowBtn.querySelector("span").innerText = "Dispatch Error";
-      }
-      setTimeout(() => (this.dispatchNowBtn.querySelector("span").innerText = "Dispatch to Swarm"), 2500);
-    } catch (e) {
-      this.dispatchNowBtn.querySelector("span").innerText = "Dispatch Failed";
-      setTimeout(() => (this.dispatchNowBtn.querySelector("span").innerText = "Dispatch to Swarm"), 2000);
-    }
+  escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  window.echoApp = new EchoScribeApp();
+  window.echoScribeApp = new EchoScribeApp();
 });

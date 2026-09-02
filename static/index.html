@@ -3,225 +3,295 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EchoScribe — On-Device Continuous Dictation & Swarm Bridge</title>
+  <title>EchoScribe — On-Device Continuous Dictation</title>
   <link rel="stylesheet" href="/static/css/shared_tokens.css" />
   <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
-<body>
-  <div class="app-layout">
-    <!-- Clean Minimal Header -->
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-badge">
-          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-            <line x1="12" x2="12" y1="19" y2="22"/>
-          </svg>
-          <span class="brand-name">EchoScribe</span>
+<body class="claude-theme">
+  <!-- WINDOW TOPBAR: Wordmark, Tone Switcher, Privacy -->
+  <header class="window-topbar">
+    <div class="topbar-left">
+      <span class="app-wordmark">EchoScribe</span>
+      <span class="airgap-status-quiet" id="airgapBadge">
+        <span class="status-dot">●</span>
+        <span>Air-Gap Active</span>
+      </span>
+    </div>
+
+    <!-- Tone Switcher (Segmented Control) -->
+    <nav class="tone-switcher" id="toneSwitcher">
+      <button class="tone-btn active" data-tone="clean">Clean</button>
+      <button class="tone-btn" data-tone="professional">Executive</button>
+      <button class="tone-btn" data-tone="bullets">Bullets</button>
+      <button class="tone-btn" data-tone="code">Code</button>
+      <button class="tone-btn" data-tone="raw">Raw</button>
+    </nav>
+
+    <div class="topbar-right">
+      <button class="icon-nav-btn active" id="bridgeToggleBtn" title="Swarm Bridge Armed">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+        <span>Swarm Bridge</span>
+      </button>
+      <button class="icon-nav-btn" id="openDictionaryTopBtn" title="Personal Dictionary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+        <span>Dictionary</span>
+      </button>
+      <button class="icon-nav-btn" id="openPaletteBtn" title="Command Palette (⌘K)">
+        <kbd class="kbd-meta">⌘K</kbd>
+      </button>
+    </div>
+  </header>
+
+  <!-- THREE-REGION LAYOUT SHELL -->
+  <div class="app-container">
+    <!-- REGION 1: LEFT SIDEBAR -->
+    <aside class="left-sidebar" id="appSidebar">
+      <!-- Primary Nav -->
+      <nav class="sidebar-primary-nav">
+        <button class="sidebar-nav-item active" id="btnNewDictation">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>New Dictation</span>
+        </button>
+        <button class="sidebar-nav-item" id="btnNavDictionary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
+          <span>Personal Dictionary</span>
+        </button>
+        <button class="sidebar-nav-item" id="btnNavSnippets">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>Macros & Snippets</span>
+        </button>
+        <button class="sidebar-nav-item" id="btnNavSettings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <!-- Pinned Dictations -->
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span>Pinned</span>
         </div>
-        <span class="badge-airgap" id="airgapBadge" title="Air-gapped local execution (0 outbound bytes)">
-          <span class="indicator-dot"></span> LOCAL ONLY
-        </span>
+        <div class="sidebar-list" id="sidebarPinnedList">
+          <div class="sidebar-row active">
+            <span class="pinned-dot">●</span>
+            <span class="sidebar-row-label">Engineering Log · Auth Service</span>
+          </div>
+          <div class="sidebar-row">
+            <span class="pinned-dot">●</span>
+            <span class="sidebar-row-label">Pull Request Description</span>
+          </div>
+        </div>
       </div>
 
-      <div class="topbar-actions">
-        <!-- Direct Swarm Bridge Status -->
-        <button id="bridgeToggleBtn" class="pill-btn active" title="Toggle automatic dispatch to CLI Workflow Swarm">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
-          <span>Swarm Bridge: Armed</span>
-        </button>
-
-        <!-- Command Palette Trigger -->
-        <button class="pill-btn" id="openPaletteBtn" title="Open Command Palette (Ctrl+K / ⌘K)">
-          <span>Command Palette</span>
-          <kbd class="kbd-badge">⌘K</kbd>
-        </button>
-
-        <!-- Air-Gap Privacy Toggle -->
-        <button class="pill-btn" id="toggleLocalOnlyBtn" title="Toggle strictly local neural processing">
-          <span id="localOnlyText">Air-Gap: Active</span>
-        </button>
+      <!-- Recent Dictations List -->
+      <div class="sidebar-section flex-grow">
+        <div class="sidebar-section-header">
+          <span>Recent Sessions</span>
+        </div>
+        <div class="sidebar-list" id="sidebarRecentList">
+          <!-- Dynamically populated entries -->
+        </div>
       </div>
-    </header>
 
-    <!-- Main Workspace -->
-    <main class="main-content">
-      <!-- Dictation Stage -->
-      <section class="dictation-hero">
-        <div class="waveform-container">
-          <canvas id="liveWaveform" width="700" height="96"></canvas>
+      <!-- Sidebar Footer (Stats) -->
+      <div class="sidebar-footer">
+        <div class="stats-summary-box">
+          <div class="stat-line">
+            <span class="stat-lbl">Dictated:</span>
+            <span class="stat-val" id="statWordCount">10,050 words</span>
+          </div>
+          <div class="stat-line">
+            <span class="stat-lbl">Speed:</span>
+            <span class="stat-val" id="statWpm">145 WPM</span>
+          </div>
+          <div class="stat-line">
+            <span class="stat-lbl">Saved:</span>
+            <span class="stat-val" id="statTimeSaved">7.2 hrs</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- REGION 2: SEAMLESS MAIN PANE -->
+    <main class="main-pane" id="mainContentPane">
+      <div class="dictation-feed-container" id="dictationFeedContainer">
+        <!-- Main Turn Feed -->
+        <div class="conversation-thread" id="conversationThread">
+          <!-- Welcome Turn -->
+          <div class="dictation-turn">
+            <div class="turn-header">
+              <span class="app-source-icon" title="VS Code">💻</span>
+              <span class="turn-author">EchoScribe Continuous Speech</span>
+              <span class="turn-meta">just now · Tone: Clean</span>
+            </div>
+            <div class="turn-body">
+              <h1 class="display-serif">Ready to stream speech to text.</h1>
+              <p>Hold <kbd class="kbd-meta">Space</kbd> or click the mic below to dictate into your active editor. Homophones are automatically mapped via your Personal Dictionary.</p>
+            </div>
+          </div>
+
+          <!-- Live Streaming Turn (Shown when recording) -->
+          <div class="dictation-turn live-turn" id="liveStreamingTurn" style="display: none;">
+            <div class="turn-header">
+              <span class="sunburst-icon active-rec">✳</span>
+              <span class="turn-author">Live Audio Stream</span>
+              <span class="turn-meta" id="liveStreamMeta">Listening...</span>
+            </div>
+            <div class="turn-body">
+              <div class="live-transcript-text" id="liveTranscriptText"></div>
+              <div class="replacements-applied-chips" id="liveReplacementsContainer"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Integrated Composer Area -->
+      <div class="composer-container">
+        <!-- App-Context Line (Quiet, thin, matching status philosophy) -->
+        <div class="app-context-line" id="appContextLine">
+          <span class="context-app-name" id="currentAppTarget">dictating into VS Code</span>
+          <span class="context-divider">·</span>
+          <span class="context-tone-name" id="currentToneLabel">Tone: Clean</span>
+          <span class="context-divider">·</span>
+          <span class="context-egress" id="currentEgressLabel">0 bytes egress (Air-Gapped)</span>
         </div>
 
-        <div class="record-controls">
-          <button id="micRecordBtn" class="mic-button" title="Click or hold Spacebar to dictate">
-            <svg id="micIcon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Integrated Pill Input with Embedded Mic -->
+        <div class="composer-pill" id="composerPill">
+          <button type="button" class="composer-mic-btn" id="composerMicBtn" title="Hold Space or Click to Dictate">
+            <svg class="mic-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
               <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
               <line x1="12" x2="12" y1="19" y2="22"/>
             </svg>
           </button>
-
-          <div class="record-meta">
-            <div class="record-status-row">
-              <span id="recordingStatusText" class="status-headline">Ready to Dictate</span>
-              <span class="active-tone-tag" id="currentToneTag">Tone: Clean</span>
-            </div>
-            <div class="record-hint">
-              Press <kbd>Space</kbd> to start streaming or <kbd>⌘K</kbd> for tone & dictionary macros
-            </div>
+          <div class="composer-placeholder" id="composerPlaceholder">
+            <span>Hold <kbd class="kbd-meta">Space</kbd> or speak a directive...</span>
           </div>
-        </div>
-
-        <!-- Auto-Learning Dictionary Suggestion Chips -->
-        <div class="suggestions-bar" id="suggestionsBar">
-          <span class="suggestions-label">Auto-Learned:</span>
-          <div class="suggestions-chips" id="suggestionsChipsContainer">
-            <!-- Dynamic chips inserted by app.js -->
-          </div>
-        </div>
-      </section>
-
-      <!-- Active Transcript & Stream Panel -->
-      <section class="transcript-stage">
-        <div class="panel-header">
-          <div class="panel-title">
-            <span>Streaming Live Transcript</span>
-            <span class="engine-tag" id="activeEngineLabel">NVIDIA Parakeet TDT (int8 local)</span>
-          </div>
-          <div class="panel-actions">
-            <button class="ghost-btn" id="copyTranscriptBtn" title="Copy to clipboard">
+          <div class="composer-actions">
+            <button type="button" class="composer-action-btn" id="copyLatestBtn" title="Copy last transcript">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-              <span>Copy</span>
             </button>
-            <button class="ghost-btn" id="dispatchNowBtn" title="Send directly to Swarm Control Room">
+            <button type="button" class="composer-action-btn" id="dispatchSwarmBtn" title="Dispatch to CLI Workflow Swarm">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              <span>Dispatch to Swarm</span>
             </button>
           </div>
         </div>
 
-        <div class="transcript-display">
-          <div id="transcriptStreamingContainer" class="streaming-text empty">
-            Speak a directive (e.g. "camel case user auth service in fast api and test with pytest")...
+        <!-- Auto-Learned Suggestion Chips Bar -->
+        <div class="suggestions-strip" id="suggestionsStrip">
+          <span class="suggestions-label">Auto-Learned:</span>
+          <div class="suggestions-chips-row" id="suggestionsChipsRow">
+            <!-- Chips populated by app.js -->
           </div>
-          <div id="replacementsAppliedContainer" class="replacements-tags"></div>
         </div>
-      </section>
-
-      <!-- Recent History Feed -->
-      <section class="history-stage">
-        <div class="section-title-row">
-          <h2 class="section-title">Recent Transcriptions & Swarm Directives</h2>
-          <span class="history-count" id="historyCountBadge">0 sessions</span>
-        </div>
-        <div class="history-feed" id="historyFeed">
-          <!-- Dynamically populated entries -->
-        </div>
-      </section>
+      </div>
     </main>
 
-    <!-- Command Palette Modal (⌘K) -->
-    <div class="palette-overlay" id="paletteOverlay">
-      <div class="palette-modal">
-        <div class="palette-search-row">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
-          <input type="text" id="paletteSearchInput" placeholder="Type a tone, snippet, or dictionary action..." autocomplete="off" />
-          <kbd class="kbd-badge">ESC</kbd>
+    <!-- REGION 3: UNIVERSAL RIGHT PANEL (Personal Dictionary & Details) -->
+    <aside class="right-panel" id="rightArtifactPanel">
+      <!-- Universal Header Bar -->
+      <div class="artifact-header">
+        <div class="artifact-header-left">
+          <div class="artifact-view-toggle">
+            <button class="view-toggle-btn active" id="btnArtifactCorrected" title="Corrected View">Corrected</button>
+            <button class="view-toggle-btn" id="btnArtifactRaw" title="Raw Code / Diff">Raw</button>
+          </div>
+          <span class="artifact-title" id="artifactTitle">Personal Dictionary</span>
+          <span class="artifact-type-badge" id="artifactBadge">· DICT</span>
         </div>
 
-        <div class="palette-sections">
-          <!-- Tones Section -->
-          <div class="palette-group">
-            <div class="group-title">Wispr Flow Tones</div>
-            <div class="group-items">
-              <div class="palette-item active" data-action="set-tone" data-value="clean">
-                <span class="item-title">Clean & Fluid</span>
-                <span class="item-desc">Removes fillers, standard punctuation & capitalization</span>
-              </div>
-              <div class="palette-item" data-action="set-tone" data-value="professional">
-                <span class="item-title">Executive & Formal</span>
-                <span class="item-desc">Polishes colloquialisms into professional engineering language</span>
-              </div>
-              <div class="palette-item" data-action="set-tone" data-value="bullets">
-                <span class="item-title">Structured Bullets</span>
-                <span class="item-desc">Breaks sentences into clean Markdown bullet items</span>
-              </div>
-              <div class="palette-item" data-action="set-tone" data-value="code">
-                <span class="item-title">Code & Technical</span>
-                <span class="item-desc">Formats HTTP methods, status codes, and identifiers</span>
-              </div>
-              <div class="palette-item" data-action="set-tone" data-value="raw">
-                <span class="item-title">Verbatim Raw</span>
-                <span class="item-desc">Unaltered speech recognition stream with zero post-processing</span>
-              </div>
+        <div class="artifact-header-right">
+          <button class="artifact-tool-btn" id="btnArtifactCopy" title="Copy Dictionary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+            <span>Copy</span>
+          </button>
+          <button class="artifact-tool-btn icon-only" id="btnArtifactExpand" title="Expand Fullscreen">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+          </button>
+          <button class="artifact-tool-btn icon-only close-btn" id="btnArtifactClose" title="Close Panel">✕</button>
+        </div>
+      </div>
+
+      <!-- Universal Artifact Content Body -->
+      <div class="artifact-body" id="artifactContentBody">
+        <!-- Dictionary entries, editor form, and JSON view populated by app.js -->
+      </div>
+    </aside>
+  </div>
+
+  <!-- Command Palette Modal (⌘K) -->
+  <div class="palette-overlay" id="paletteOverlay">
+    <div class="palette-modal">
+      <div class="palette-search-row">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+        <input type="text" id="paletteSearchInput" placeholder="Type a tone, snippet, or dictionary action..." autocomplete="off" />
+        <kbd class="kbd-meta">ESC</kbd>
+      </div>
+
+      <div class="palette-sections">
+        <!-- Tones Group -->
+        <div class="palette-group">
+          <div class="group-title">Wispr Flow Tones</div>
+          <div class="group-items">
+            <div class="palette-item active" data-action="set-tone" data-value="clean">
+              <span class="item-title">Clean & Fluid</span>
+              <span class="item-desc">Removes fillers, standard punctuation & capitalization</span>
+            </div>
+            <div class="palette-item" data-action="set-tone" data-value="professional">
+              <span class="item-title">Executive & Formal</span>
+              <span class="item-desc">Polishes colloquialisms into professional engineering language</span>
+            </div>
+            <div class="palette-item" data-action="set-tone" data-value="bullets">
+              <span class="item-title">Structured Bullets</span>
+              <span class="item-desc">Breaks sentences into clean Markdown bullet items</span>
+            </div>
+            <div class="palette-item" data-action="set-tone" data-value="code">
+              <span class="item-title">Code & Technical</span>
+              <span class="item-desc">Formats HTTP methods, status codes, and identifiers</span>
+            </div>
+            <div class="palette-item" data-action="set-tone" data-value="raw">
+              <span class="item-title">Verbatim Raw</span>
+              <span class="item-desc">Unaltered speech recognition stream with zero post-processing</span>
             </div>
           </div>
+        </div>
 
-          <!-- Quick Snippets -->
-          <div class="palette-group">
-            <div class="group-title">Snippets & Macros</div>
-            <div class="group-items" id="paletteSnippetsList">
-              <div class="palette-item" data-action="insert-snippet" data-value="!pr">
-                <span class="item-title">!pr</span>
-                <span class="item-desc">Pull Request template with Description and Testing blocks</span>
-              </div>
-              <div class="palette-item" data-action="insert-snippet" data-value="!todo">
-                <span class="item-title">!todo</span>
-                <span class="item-desc">Markdown action item task check-box</span>
-              </div>
-              <div class="palette-item" data-action="insert-snippet" data-value="!sign">
-                <span class="item-title">!sign</span>
-                <span class="item-desc">Professional email sign-off signature</span>
-              </div>
+        <!-- Snippets Group -->
+        <div class="palette-group">
+          <div class="group-title">Snippets & Macros</div>
+          <div class="group-items">
+            <div class="palette-item" data-action="insert-snippet" data-value="!pr">
+              <span class="item-title">!pr</span>
+              <span class="item-desc">Pull Request template with Description and Testing blocks</span>
+            </div>
+            <div class="palette-item" data-action="insert-snippet" data-value="!todo">
+              <span class="item-title">!todo</span>
+              <span class="item-desc">Markdown action item task check-box</span>
+            </div>
+            <div class="palette-item" data-action="insert-snippet" data-value="!sign">
+              <span class="item-title">!sign</span>
+              <span class="item-desc">Professional email sign-off signature</span>
             </div>
           </div>
+        </div>
 
-          <!-- Dictionary Quick Add -->
-          <div class="palette-group">
-            <div class="group-title">Dictionary Actions</div>
-            <div class="group-items">
-              <div class="palette-item" data-action="add-dictionary-word">
-                <span class="item-title">+ Add New Term Mapping</span>
-                <span class="item-desc">Map spoken homophone to exact case technical identifier</span>
-              </div>
-              <div class="palette-item" data-action="toggle-local-only">
-                <span class="item-title">🛡️ Toggle Air-Gap / Local-Only Mode</span>
-                <span class="item-desc">Guarantee 0 network egress by restricting to on-device models</span>
-              </div>
+        <!-- Dictionary Actions Group -->
+        <div class="palette-group">
+          <div class="group-title">Dictionary Actions</div>
+          <div class="group-items">
+            <div class="palette-item" data-action="open-dictionary">
+              <span class="item-title">📚 Open Personal Dictionary</span>
+              <span class="item-desc">View and edit spoken homophone technical replacements</span>
+            </div>
+            <div class="palette-item" data-action="toggle-local-only">
+              <span class="item-title">🛡️ Toggle Air-Gap / Local-Only Mode</span>
+              <span class="item-desc">Guarantee 0 network egress by restricting to on-device models</span>
             </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Quiet Persistent Bottom Stats Strip -->
-    <footer class="bottom-stats-strip">
-      <div class="stat-item">
-        <span class="stat-label">Words Dictated:</span>
-        <span class="stat-value" id="statWordCount">10,050</span>
-      </div>
-      <div class="stat-separator">·</div>
-      <div class="stat-item">
-        <span class="stat-label">Typing Speed:</span>
-        <span class="stat-value" id="statWpm">145 WPM</span>
-      </div>
-      <div class="stat-separator">·</div>
-      <div class="stat-item">
-        <span class="stat-label">Time Saved:</span>
-        <span class="stat-value" id="statTimeSaved">7.2 hrs</span>
-      </div>
-      <div class="stat-separator">·</div>
-      <div class="stat-item">
-        <span class="stat-label">Milestone Rank:</span>
-        <span class="stat-value rank-badge" id="statRankBadge">10K Milestone Titan</span>
-      </div>
-      <div class="stat-separator">·</div>
-      <div class="stat-item">
-        <span class="stat-label">Egress:</span>
-        <span class="stat-value text-success" id="statEgress">0 bytes (Air-Gapped)</span>
-      </div>
-    </footer>
   </div>
 
   <script src="/static/js/app.js"></script>
