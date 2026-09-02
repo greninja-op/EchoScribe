@@ -1,14 +1,15 @@
-"""Correction Dictionary, Tone Transformer, and Snippets Engine for EchoScribe.
+"""Correction Dictionary, Tone Transformer, Auto-Learning, and Snippets Engine for EchoScribe.
 
 Handles domain vocabulary, phonetic normalization, voice casing macros,
-custom snippet expansions, and Wispr Flow-style tone styling.
+auto-learning suggestions, in-place voice editing, custom snippets, and Wispr Flow tones.
 """
 import json
 import re
 import logging
 from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional
-from .config import DICTIONARY_FILE, SNIPPETS_FILE
+
+from .config import DICTIONARY_FILE, SNIPPETS_FILE, SUGGESTIONS_FILE
 
 logger = logging.getLogger("echoscribe.dictionary")
 
@@ -17,23 +18,47 @@ FILLER_WORDS_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+COMMON_TECH_CANDIDATES = {
+    "supabase": "Supabase",
+    "postgresql": "PostgreSQL",
+    "postgres": "PostgreSQL",
+    "prisma": "Prisma",
+    "redis": "Redis",
+    "graphql": "GraphQL",
+    "tailwind": "TailwindCSS",
+    "celery": "Celery",
+    "rabbitmq": "RabbitMQ",
+    "oauth": "OAuth2",
+    "jwt": "JWT",
+    "webrtc": "WebRTC",
+    "websocket": "WebSocket",
+    "websockets": "WebSockets",
+    "langchain": "LangChain",
+    "llamaindex": "LlamaIndex",
+    "chromadb": "ChromaDB",
+}
+
 
 class CorrectionDictionary:
-    """Manages dictionary terms, category tags, snippets, and tone formatting."""
+    """Manages dictionary terms, category tags, auto-learning suggestions, and tone formatting."""
 
     def __init__(
         self,
         filepath: Path = DICTIONARY_FILE,
         snippets_path: Path = SNIPPETS_FILE,
+        suggestions_path: Path = SUGGESTIONS_FILE,
     ):
         self.filepath = Path(filepath)
         self.snippets_path = Path(snippets_path)
-        self.words: Dict[str, Dict[str, str]] = {}  # {phrase: {"replacement": "...", "category": "..."}}
+        self.suggestions_path = Path(suggestions_path)
+        self.words: Dict[str, Dict[str, str]] = {}
         self.patterns: List[Dict[str, str]] = []
         self.snippets: Dict[str, str] = {}
+        self.suggestions: Dict[str, Dict[str, Any]] = {}
         self._compiled_regexes: List[Tuple[re.Pattern, str]] = []
         self.load()
         self.load_snippets()
+        self.load_suggestions()
 
     def load(self) -> None:
         """Load dictionary from disk."""
@@ -45,7 +70,6 @@ class CorrectionDictionary:
             with open(self.filepath, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 raw_words = data.get("words", {})
-                # Normalize schema to support category tags
                 normalized = {}
                 for k, v in raw_words.items():
                     if isinstance(v, dict):
@@ -70,6 +94,141 @@ class CorrectionDictionary:
         except Exception as e:
             logger.warning(f"Failed to load snippets: {e}")
             self.snippets = {}
+
+    def load_suggestions(self) -> None:
+        """Load auto-learning dictionary suggestions."""
+        if self.suggestions_path.exists():
+            try:
+                with open(self.suggestions_path, "r", encoding="utf-8") as f:
+                    self.suggestions = json.load(f)
+                    return
+            except Exception as e:
+                logger.warning(f"Could not load suggestions: {e}")
+        # Default seed suggestions
+        self.suggestions = {
+            "supabase": {"proposed_replacement": "Supabase", "occurrences": 3, "category": "tech", "status": "pending"},
+            "postgresql": {"proposed_replacement": "PostgreSQL", "occurrences": 2, "category": "code", "status": "pending"},
+            "tailwind": {"proposed_replacement": "TailwindCSS", "occurrences": 2, "category": "code", "status": "pending"}
+        }
+
+    def save_suggestions(self) -> bool:
+        """Persist auto-learned suggestions."""
+        try:
+            self.suggestions_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.suggestions_path, "w", encoding="utf-8") as f:
+                json.dump(self.suggestions, f, indent=2)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to save suggestions: {e}")
+            return False
+
+    def detect_potential_learnings(self, text: str) -> List[Dict[str, Any]]:
+        """Identify potential technical terms to auto-propose for dictionary addition."""
+        new_discoveries = []
+        words_in_text = re.findall(r"\b[a-zA-Z0-9_\-]+\b", text.lower())
+        for w in words_in_text:
+            if w in COMMON_TECH_CANDIDATES and w not in self.words:
+                replacement = COMMON_TECH_CANDIDATES[w]
+                if w in self.suggestions:
+                    self.suggestions[w]["occurrences"] += 1
+                else:
+                    self.suggestions[w] = {
+                        "proposed_replacement": replacement,
+                        "occurrences": 1,
+                        "category": "auto-learned",
+                        "status": "pending",
+                    }
+                new_discoveries.append({"phrase": w, "replacement": replacement})
+        if new_discoveries:
+            self.save_suggestions()
+        return new_discoveries
+
+    def get_suggestions(self) -> List[Dict[str, Any]]:
+        """Return list of pending suggestions for UI chips."""
+        return [
+            {"phrase": k, **v}
+            for k, v in self.suggestions.items()
+            if v.get("status") == "pending"
+        ]
+
+    def accept_suggestion(self, phrase: str, replacement: Optional[str] = None) -> bool:
+        """Accept an auto-learned suggestion into the active dictionary."""
+        phrase_clean = phrase.strip().lower()
+        if phrase_clean in self.suggestions:
+            item = self.suggestions[phrase_clean]
+            target_replacement = replacement or item.get("proposed_replacement", phrase.capitalize())
+            category = item.get("category", "tech")
+            self.add_word(phrase_clean, target_replacement, category=category)
+            item["status"] = "accepted"
+            self.save_suggestions()
+            return True
+        return False
+
+    def dismiss_suggestion(self, phrase: str) -> bool:
+        """Dismiss an auto-learned suggestion."""
+        phrase_clean = phrase.strip().lower()
+        if phrase_clean in self.suggestions:
+            self.suggestions[phrase_clean]["status"] = "dismissed"
+            self.save_suggestions()
+            return True
+        return False
+
+    def detect_and_apply_in_place_edit(
+        self, prompt_text: str, last_transcript: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Detect in-place voice editing intents (Tambourine-style) targeting the previous transcript.
+        Examples: 'make this shorter', 'make it formal', 'fix grammar', 'format as bullets'.
+        """
+        if not last_transcript:
+            return None
+
+        prompt_clean = prompt_text.strip().lower()
+
+        # 1. Shorten
+        if any(w in prompt_clean for w in ["make this shorter", "make it shorter", "shorten this", "be concise", "condense this"]):
+            # Strip redundant words / filler and simplify
+            shortened = FILLER_WORDS_PATTERN.sub("", last_transcript)
+            sentences = [s.strip() for s in re.split(r"[.!?]+", shortened) if s.strip()]
+            if len(sentences) > 1:
+                # Keep top essential clauses
+                shortened = ". ".join(sentences[:2]) + "."
+            else:
+                shortened = sentences[0] + "." if sentences else last_transcript
+            return {
+                "in_place_edit": True,
+                "command": "shorten",
+                "original": last_transcript,
+                "corrected": shortened,
+                "tone": "clean",
+                "replacements": [{"from": last_transcript, "to": shortened, "type": "in_place_edit"}],
+            }
+
+        # 2. Make formal / professional
+        if any(w in prompt_clean for w in ["make this formal", "make it formal", "professional tone", "more professional"]):
+            return {
+                "in_place_edit": True,
+                "command": "professional",
+                **self.apply(last_transcript, tone="professional", apply_snippets=False)
+            }
+
+        # 3. Format as bullets
+        if any(w in prompt_clean for w in ["format as bullets", "make it bullet points", "convert to bullets", "bullet points"]):
+            return {
+                "in_place_edit": True,
+                "command": "bullets",
+                **self.apply(last_transcript, tone="bullets", apply_snippets=False)
+            }
+
+        # 4. Fix grammar & clean
+        if any(w in prompt_clean for w in ["fix grammar", "clean grammar", "fix the grammar", "clean this up"]):
+            return {
+                "in_place_edit": True,
+                "command": "fix_grammar",
+                **self.apply(last_transcript, tone="clean", apply_snippets=False)
+            }
+
+        return None
 
     def _save_default_snippets(self) -> None:
         defaults = {
@@ -210,6 +369,7 @@ class CorrectionDictionary:
             "words_detailed": self.words,
             "patterns": self.patterns,
             "snippets": self.snippets,
+            "suggestions_count": len(self.get_suggestions()),
         }
 
     def apply(
@@ -224,6 +384,9 @@ class CorrectionDictionary:
 
         corrected = text
         replacements_applied: List[Dict[str, str]] = []
+
+        # Auto-learning candidate detection
+        self.detect_potential_learnings(text)
 
         # 0. Raw Verbatim Mode (bypass all processing)
         if tone == "raw":
@@ -302,7 +465,6 @@ class CorrectionDictionary:
 
         # 4. Apply Tone Transformations (Wispr Flow Styles)
         if tone == "clean":
-            # Remove filler words and fix whitespace/capitalization
             corrected = FILLER_WORDS_PATTERN.sub("", corrected)
             corrected = re.sub(r"\s+", " ", corrected).strip()
             if corrected and corrected[0].islower():
@@ -313,7 +475,6 @@ class CorrectionDictionary:
         elif tone == "professional":
             corrected = FILLER_WORDS_PATTERN.sub("", corrected)
             corrected = re.sub(r"\s+", " ", corrected).strip()
-            # Polish common casual terms into executive language
             prof_replacements = {
                 r"\bgonna\b": "going to",
                 r"\bwanna\b": "wish to",
@@ -330,7 +491,6 @@ class CorrectionDictionary:
                 corrected += "."
 
         elif tone == "bullets":
-            # Break sentences or list items into clear bullet points
             sentences = [s.strip() for s in re.split(r"[.!?\n]+|\band\s+also\s+|\bnext\s+", corrected) if s.strip()]
             if len(sentences) > 1:
                 bullets = [f"- {s[0].upper() + s[1:]}" for s in sentences]
@@ -339,9 +499,7 @@ class CorrectionDictionary:
                 corrected = f"- {corrected}"
 
         elif tone == "code":
-            # Wrap keywords or identifiers in backticks where helpful
             corrected = FILLER_WORDS_PATTERN.sub("", corrected)
-            # e.g., "return status code 200"
             corrected = re.sub(r"\b(status\s+code\s+\d+)\b", r"`\1`", corrected, flags=re.IGNORECASE)
             corrected = re.sub(r"\b(GET|POST|PUT|DELETE|PATCH)\b", r"`\1`", corrected)
 

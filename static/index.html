@@ -3,387 +3,225 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Flow Pro Modular Synthesizer | Cyber-Pop Voice Studio</title>
+  <title>EchoScribe — On-Device Continuous Dictation & Swarm Bridge</title>
+  <link rel="stylesheet" href="/static/css/shared_tokens.css" />
   <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
 <body>
-  <div class="synth-app-shell">
-    <!-- Top Console Header -->
-    <header class="synth-topbar">
-      <div class="brand-badge-group">
-        <div class="brand-badge-logo">
-          <span>🎛️</span>
-          <span>FLOW SYNTH</span>
+  <div class="app-layout">
+    <!-- Clean Minimal Header -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-badge">
+          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" x2="12" y1="19" y2="22"/>
+          </svg>
+          <span class="brand-name">EchoScribe</span>
         </div>
-        <span class="pro-chip">PRO MODULAR v2.0</span>
+        <span class="badge-airgap" id="airgapBadge" title="Air-gapped local execution (0 outbound bytes)">
+          <span class="indicator-dot"></span> LOCAL ONLY
+        </span>
       </div>
 
-      <div class="synth-status-pills">
-        <div class="synth-pill active-lime" id="engineStatusPill">⚡ ON-DEVICE DSP ACTIVE</div>
-        <div class="synth-pill active-yellow" id="liveClockPill">12:00 PM</div>
+      <div class="topbar-actions">
+        <!-- Direct Swarm Bridge Status -->
+        <button id="bridgeToggleBtn" class="pill-btn active" title="Toggle automatic dispatch to CLI Workflow Swarm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
+          <span>Swarm Bridge: Armed</span>
+        </button>
+
+        <!-- Command Palette Trigger -->
+        <button class="pill-btn" id="openPaletteBtn" title="Open Command Palette (Ctrl+K / ⌘K)">
+          <span>Command Palette</span>
+          <kbd class="kbd-badge">⌘K</kbd>
+        </button>
+
+        <!-- Air-Gap Privacy Toggle -->
+        <button class="pill-btn" id="toggleLocalOnlyBtn" title="Toggle strictly local neural processing">
+          <span id="localOnlyText">Air-Gap: Active</span>
+        </button>
       </div>
     </header>
 
-    <!-- Main Deck Layout -->
-    <div class="synth-body">
-      <!-- Tactile Pink Modular Sidebar -->
-      <aside class="synth-sidebar">
-        <div>
-          <nav class="synth-nav-deck">
-            <a class="synth-nav-btn active" data-view="view-dictation">
-              <span class="nav-icon">🎙️</span>
-              <span>Dictation</span>
-            </a>
-            <a class="synth-nav-btn" data-view="view-notetaker">
-              <span class="nav-icon">🔘</span>
-              <span>Notetaker</span>
-            </a>
-            <a class="synth-nav-btn" data-view="view-insights">
-              <span class="nav-icon">📊</span>
-              <span>Insights</span>
-            </a>
-            <a class="synth-nav-btn" data-view="view-dictionary">
-              <span class="nav-icon">📖</span>
-              <span>Dictionary</span>
-            </a>
-            <a class="synth-nav-btn" data-view="view-snippets">
-              <span class="nav-icon">✂️</span>
-              <span>Snippets</span>
-            </a>
-            <a class="synth-nav-btn" data-view="view-style">
-              <span class="nav-icon">🎛️</span>
-              <span>Voice Style</span>
-            </a>
-            <a class="synth-nav-btn" data-view="view-transforms">
-              <span class="nav-icon">🪄</span>
-              <span>Transforms</span>
-            </a>
-            <a class="synth-nav-btn" data-view="view-scratchpad">
-              <span class="nav-icon">📝</span>
-              <span>Scratchpad</span>
-            </a>
-          </nav>
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <!-- Dictation Stage -->
+      <section class="dictation-hero">
+        <div class="waveform-container">
+          <canvas id="liveWaveform" width="700" height="96"></canvas>
         </div>
 
-        <div class="sidebar-faders-bottom">
-          <a class="synth-nav-btn">
-            <span class="nav-icon">👥</span>
-            <span>Invite Team</span>
-          </a>
-          <a class="synth-nav-btn" href="/docs" target="_blank">
-            <span class="nav-icon">⚡</span>
-            <span>API Docs</span>
-          </a>
+        <div class="record-controls">
+          <button id="micRecordBtn" class="mic-button" title="Click or hold Spacebar to dictate">
+            <svg id="micIcon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+          </button>
+
+          <div class="record-meta">
+            <div class="record-status-row">
+              <span id="recordingStatusText" class="status-headline">Ready to Dictate</span>
+              <span class="active-tone-tag" id="currentToneTag">Tone: Clean</span>
+            </div>
+            <div class="record-hint">
+              Press <kbd>Space</kbd> to start streaming or <kbd>⌘K</kbd> for tone & dictionary macros
+            </div>
+          </div>
         </div>
-      </aside>
 
-      <!-- Workspace Console -->
-      <main class="synth-workspace">
-        <!-- VIEW 1: DICTATION SYNTH DECK -->
-        <section id="view-dictation" class="synth-view active">
-          <div class="synth-view-header">
-            <h1 class="synth-view-title">Welcome back, Greninja</h1>
+        <!-- Auto-Learning Dictionary Suggestion Chips -->
+        <div class="suggestions-bar" id="suggestionsBar">
+          <span class="suggestions-label">Auto-Learned:</span>
+          <div class="suggestions-chips" id="suggestionsChipsContainer">
+            <!-- Dynamic chips inserted by app.js -->
           </div>
+        </div>
+      </section>
 
-          <!-- Hero Deck Banner -->
-          <div class="synth-hero-deck">
-            <div class="hero-content">
-              <h2>Make Flow sound like <em>YOU</em></h2>
-              <p>Set up adaptive writing styles, macros & tone synthesizers.</p>
-              <button class="synth-btn-pop" onclick="switchView('view-style')">Configure Voice Twin</button>
-            </div>
-            <div style="font-size: 3.5rem; text-shadow: 4px 4px 0 #000;">🎛️✨</div>
+      <!-- Active Transcript & Stream Panel -->
+      <section class="transcript-stage">
+        <div class="panel-header">
+          <div class="panel-title">
+            <span>Streaming Live Transcript</span>
+            <span class="engine-tag" id="activeEngineLabel">NVIDIA Parakeet TDT (int8 local)</span>
           </div>
-
-          <!-- Modular Audio Control & Oscilloscope Unit -->
-          <div class="synth-control-deck">
-            <div class="deck-upper-row">
-              <div class="tactile-pad-group">
-                <button id="mainMicBtn" class="synth-record-pad" title="Hold Spacebar or Click to Dictate">
-                  🎙️
-                </button>
-                <div class="pad-meta">
-                  <span id="micStatusText" class="pad-title">READY TO DICTATE</span>
-                  <span class="pad-subtitle">HOLD <kbd style="background: var(--synth-yellow); color: #000; padding: 2px 8px; border-radius: 6px; border: 2px solid #000; font-weight: 800;">SPACEBAR</kbd> OR CLICK PAD</span>
-                </div>
-              </div>
-
-              <!-- Oscilloscope CRT Screen -->
-              <div class="synth-crt-screen">
-                <canvas id="oscilloscopeCanvas" width="300" height="68"></canvas>
-              </div>
-            </div>
-
-            <!-- Tactile Tone Selector Keys -->
-            <div class="tone-keys-deck">
-              <span style="font-weight: 800; font-size: 0.95rem; color: var(--synth-yellow); margin-right: 6px;">SYNTH TONE:</span>
-              <button class="tone-key-btn active" data-tone="clean">✨ Clean & Fluid</button>
-              <button class="tone-key-btn" data-tone="professional">💼 Professional</button>
-              <button class="tone-key-btn" data-tone="casual">☕ Casual</button>
-              <button class="tone-key-btn" data-tone="code">💻 Code</button>
-              <button class="tone-key-btn" data-tone="bullets">📝 Bullets</button>
-              <button class="tone-key-btn" data-tone="raw">🎙️ Raw Verbatim</button>
-            </div>
+          <div class="panel-actions">
+            <button class="ghost-btn" id="copyTranscriptBtn" title="Copy to clipboard">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+              <span>Copy</span>
+            </button>
+            <button class="ghost-btn" id="dispatchNowBtn" title="Send directly to Swarm Control Room">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>Dispatch to Swarm</span>
+            </button>
           </div>
+        </div>
 
-          <!-- Dictation Stream Deck + Right Synth Modules -->
-          <div class="dictation-stream-grid">
-            <!-- Left Stream Feed Deck -->
-            <div class="stream-deck">
-              <div class="stream-deck-header">
-                <span class="stream-tag-date">TODAY'S AUDIO CAPTURE</span>
-                <span id="liveLatencyTag" style="font-family: var(--font-mono); font-size: 0.88rem; font-weight: 800; color: var(--synth-lime);">⚡ LATENCY: 120ms</span>
-              </div>
-
-              <div id="dictationTimelineList" style="display: flex; flex-direction: column; gap: 14px;">
-                <!-- Feed items rendered dynamically -->
-              </div>
-            </div>
-
-            <!-- Right Synth Modules Column -->
-            <div class="synth-modules-col">
-              <div class="synth-module-card">
-                <div class="mod-header">Speech Metrics Module</div>
-                <div class="mod-metric-row">
-                  <span style="font-weight: 700; color: #9CA3AF;">TOTAL WORDS</span>
-                  <span class="mod-big-val" id="sideTotalWords">15.5K</span>
-                </div>
-                <div class="mod-metric-row">
-                  <span style="font-weight: 700; color: #9CA3AF;">WPM SPEEDS</span>
-                  <span class="mod-big-val" id="sideWpm" style="color: var(--synth-blue);">85</span>
-                </div>
-                <div class="mod-metric-row" style="border-bottom: none; margin-bottom: 0;">
-                  <span style="font-weight: 700; color: #9CA3AF;">DAY STREAK</span>
-                  <span class="mod-big-val" id="sideStreak" style="color: var(--synth-pink);">1</span>
-                </div>
-              </div>
-
-              <div class="synth-module-card voice-twin-card">
-                <div class="mod-header">Voice Profile Active</div>
-                <div style="font-size: 1.25rem; font-weight: 800;" id="vpBadgeName">Protocol Investigator</div>
-                <div style="margin-top: 6px; font-size: 0.9rem; font-weight: 700;">10K Gold Intent Engine: <strong style="background: #000; color: var(--synth-lime); padding: 2px 6px; border-radius: 4px;">ACTIVE</strong></div>
-              </div>
-            </div>
+        <div class="transcript-display">
+          <div id="transcriptStreamingContainer" class="streaming-text empty">
+            Speak a directive (e.g. "camel case user auth service in fast api and test with pytest")...
           </div>
-        </section>
+          <div id="replacementsAppliedContainer" class="replacements-tags"></div>
+        </div>
+      </section>
 
-        <!-- VIEW 2: INSIGHTS SYNTH CONSOLE -->
-        <section id="view-insights" class="synth-view">
-          <div class="synth-view-header">
-            <div>
-              <h1 class="synth-view-title">Insights Console</h1>
-              <div style="display: flex; gap: 10px; margin-top: 6px;">
-                <button class="synth-btn-pop" style="padding: 4px 14px; font-size: 0.95rem;">Usage Analytics</button>
-                <button class="synth-btn-pop" style="padding: 4px 14px; font-size: 0.95rem; background: #262938; color: #fff;">Voice Matrix</button>
-              </div>
-            </div>
-            <div class="synth-btn-pop" style="background: var(--synth-lime); border-radius: 50%; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem;" title="Share Metrics">
-              SHARE
-            </div>
-          </div>
+      <!-- Recent History Feed -->
+      <section class="history-stage">
+        <div class="section-title-row">
+          <h2 class="section-title">Recent Transcriptions & Swarm Directives</h2>
+          <span class="history-count" id="historyCountBadge">0 sessions</span>
+        </div>
+        <div class="history-feed" id="historyFeed">
+          <!-- Dynamically populated entries -->
+        </div>
+      </section>
+    </main>
 
-          <!-- Top Meter Boxes -->
-          <div class="synth-metrics-grid">
-            <!-- Meter 1: WPM Gauge -->
-            <div class="meter-box-deck">
-              <div>
-                <span class="meter-title">WORDS PER MINUTE (WPM)</span>
-                <div style="font-size: 2.8rem; font-weight: 800; color: var(--synth-lime); margin-top: 4px;" id="insightsWpm">85</div>
-              </div>
-              <div class="rotary-gauge-wrap">
-                <canvas id="gaugeCanvas" width="140" height="70" class="gauge-canvas"></canvas>
-                <div class="gauge-top-badge">Top 7%</div>
-              </div>
-            </div>
+    <!-- Command Palette Modal (⌘K) -->
+    <div class="palette-overlay" id="paletteOverlay">
+      <div class="palette-modal">
+        <div class="palette-search-row">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+          <input type="text" id="paletteSearchInput" placeholder="Type a tone, snippet, or dictionary action..." autocomplete="off" />
+          <kbd class="kbd-badge">ESC</kbd>
+        </div>
 
-            <!-- Meter 2: Fixes Made -->
-            <div class="meter-box-deck">
-              <div>
-                <span class="meter-title">FIXES MADE BY FLOW</span>
-                <div style="font-size: 2.8rem; font-weight: 800; color: var(--synth-pink); margin-top: 4px;" id="insightsTotalFixes">2,163</div>
+        <div class="palette-sections">
+          <!-- Tones Section -->
+          <div class="palette-group">
+            <div class="group-title">Wispr Flow Tones</div>
+            <div class="group-items">
+              <div class="palette-item active" data-action="set-tone" data-value="clean">
+                <span class="item-title">Clean & Fluid</span>
+                <span class="item-desc">Removes fillers, standard punctuation & capitalization</span>
               </div>
-              <div style="display: flex; flex-direction: column; gap: 6px; font-weight: 700; margin-top: 0.75rem;">
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: #9CA3AF;">Words Corrected:</span>
-                  <span style="color: var(--synth-lime);">1,565</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="color: #9CA3AF;">Dictionary Fixes:</span>
-                  <span style="color: var(--synth-blue);">598</span>
-                </div>
+              <div class="palette-item" data-action="set-tone" data-value="professional">
+                <span class="item-title">Executive & Formal</span>
+                <span class="item-desc">Polishes colloquialisms into professional engineering language</span>
               </div>
-            </div>
-
-            <!-- Meter 3: Total Words & Dr. Seuss Milestone -->
-            <div class="meter-box-deck">
-              <div>
-                <span class="meter-title">TOTAL WORDS DICTATED</span>
-                <div style="font-size: 2.8rem; font-weight: 800; color: var(--synth-yellow); margin-top: 4px;" id="insightsTotalWords">15,470</div>
+              <div class="palette-item" data-action="set-tone" data-value="bullets">
+                <span class="item-title">Structured Bullets</span>
+                <span class="item-desc">Breaks sentences into clean Markdown bullet items</span>
               </div>
-              <div>
-                <div class="seuss-badge-card" id="drSeussQuote">You've written 1 Dr. Seuss book!</div>
-                <div class="synth-seg-bar">
-                  <div class="seg-desk">💻 Desktop: 82%</div>
-                  <div class="seg-mob">📱 Mobile: 18%</div>
-                </div>
+              <div class="palette-item" data-action="set-tone" data-value="code">
+                <span class="item-title">Code & Technical</span>
+                <span class="item-desc">Formats HTTP methods, status codes, and identifiers</span>
+              </div>
+              <div class="palette-item" data-action="set-tone" data-value="raw">
+                <span class="item-title">Verbatim Raw</span>
+                <span class="item-desc">Unaltered speech recognition stream with zero post-processing</span>
               </div>
             </div>
           </div>
 
-          <!-- Bottom Split: Desktop Usage Faders + Sequencer Heatmap -->
-          <div class="synth-bottom-split">
-            <!-- App Usage Faders -->
-            <div class="meter-box-deck">
-              <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <h3 style="font-size: 1.3rem; font-weight: 800; color: #FFFFFF;">Desktop Application Usage</h3>
-                <span style="font-size: 0.8rem; font-weight: 800; color: var(--synth-lime);">APPS: 13</span>
+          <!-- Quick Snippets -->
+          <div class="palette-group">
+            <div class="group-title">Snippets & Macros</div>
+            <div class="group-items" id="paletteSnippetsList">
+              <div class="palette-item" data-action="insert-snippet" data-value="!pr">
+                <span class="item-title">!pr</span>
+                <span class="item-desc">Pull Request template with Description and Testing blocks</span>
               </div>
-
-              <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 1rem;">
-                <div class="usage-fader-row">
-                  <span style="width: 24px;">🤖</span>
-                  <div class="usage-fader-track" style="width: 76%; background: var(--synth-lime);">76%</div>
-                  <span style="min-width: 120px; font-size: 0.82rem; color: #9CA3AF;">119 AI PROMPTS</span>
-                </div>
-                <div class="usage-fader-row">
-                  <span style="width: 24px;">♾️</span>
-                  <div class="usage-fader-track" style="width: 25%; background: var(--synth-blue);">15%</div>
-                  <span style="min-width: 120px; font-size: 0.82rem; color: #9CA3AF;">20 OTHER TASKS</span>
-                </div>
-                <div class="usage-fader-row">
-                  <span style="width: 24px;">📄</span>
-                  <div class="usage-fader-track" style="width: 15%; background: var(--synth-yellow);">9%</div>
-                  <span style="min-width: 120px; font-size: 0.82rem; color: #9CA3AF;">1 DOCUMENTS</span>
-                </div>
-                <div class="usage-fader-row">
-                  <span style="width: 24px;">✉️</span>
-                  <div class="usage-fader-track" style="width: 8%; background: #374151; color: #fff;">0%</div>
-                  <span style="min-width: 120px; font-size: 0.82rem; color: #9CA3AF;">0 EMAILS</span>
-                </div>
+              <div class="palette-item" data-action="insert-snippet" data-value="!todo">
+                <span class="item-title">!todo</span>
+                <span class="item-desc">Markdown action item task check-box</span>
               </div>
-            </div>
-
-            <!-- Sequencer Activity Heatmap -->
-            <div class="meter-box-deck">
-              <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                <h3 style="font-size: 1.3rem; font-weight: 800; color: #FFFFFF;" id="streakTitle">1 Day Activity Streak</h3>
-                <span style="font-size: 0.8rem; font-weight: 800; color: var(--synth-pink);">LONGEST: 4 DAYS</span>
-              </div>
-
-              <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 800; color: var(--synth-yellow); margin-top: 0.75rem;">
-                <span>MAY</span>
-                <span>JUN</span>
-                <span>JUL</span>
-                <span>AUG</span>
-              </div>
-
-              <div class="sequencer-heatmap-grid" id="streakHeatmapGrid">
-                <!-- Cells generated dynamically -->
+              <div class="palette-item" data-action="insert-snippet" data-value="!sign">
+                <span class="item-title">!sign</span>
+                <span class="item-desc">Professional email sign-off signature</span>
               </div>
             </div>
           </div>
-        </section>
 
-        <!-- VIEW 3: DICTIONARY RACK -->
-        <section id="view-dictionary" class="synth-view">
-          <div class="synth-view-header">
-            <div>
-              <h1 class="synth-view-title">Dictionary Rack</h1>
-              <p style="color: var(--synth-blue); font-size: 1rem; font-weight: 600;">Phonetic speech replacement matrix for code, tech, & developer names.</p>
+          <!-- Dictionary Quick Add -->
+          <div class="palette-group">
+            <div class="group-title">Dictionary Actions</div>
+            <div class="group-items">
+              <div class="palette-item" data-action="add-dictionary-word">
+                <span class="item-title">+ Add New Term Mapping</span>
+                <span class="item-desc">Map spoken homophone to exact case technical identifier</span>
+              </div>
+              <div class="palette-item" data-action="toggle-local-only">
+                <span class="item-title">🛡️ Toggle Air-Gap / Local-Only Mode</span>
+                <span class="item-desc">Guarantee 0 network egress by restricting to on-device models</span>
+              </div>
             </div>
           </div>
-
-          <div class="rack-toolbar">
-            <input type="text" id="addPhraseInput" class="rack-input" placeholder="Spoken trigger (e.g. fast api)" />
-            <input type="text" id="addReplInput" class="rack-input" placeholder="Replacement (e.g. FastAPI)" />
-            <select id="addCatSelect" class="rack-input" style="max-width: 140px; background: #000; font-weight: 700;">
-              <option value="code">Code</option>
-              <option value="tech">Tech</option>
-              <option value="names">Names</option>
-              <option value="acronyms">Acronyms</option>
-            </select>
-            <button id="submitWordBtn" class="synth-btn-pop" style="background: var(--synth-lime);">+ ADD WORD</button>
-          </div>
-
-          <input type="text" id="searchWordsInput" class="rack-input" placeholder="🔍 Search vocabulary rack..." style="width: 100%;" />
-
-          <div class="rack-table-card">
-            <table class="rack-table">
-              <thead>
-                <tr>
-                  <th>Spoken Trigger</th>
-                  <th>Canonical Output</th>
-                  <th>Category</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="flowDictTableBody"></tbody>
-            </table>
-          </div>
-        </section>
-
-        <!-- VIEW 4: SNIPPETS RACK -->
-        <section id="view-snippets" class="synth-view">
-          <div class="synth-view-header">
-            <div>
-              <h1 class="synth-view-title">Snippets Rack</h1>
-              <p style="color: var(--synth-pink); font-size: 1rem; font-weight: 600;">Voice macro triggers expanded automatically as you dictate.</p>
-            </div>
-          </div>
-
-          <div class="rack-toolbar">
-            <input type="text" id="snipTriggerInput" class="rack-input" placeholder="Trigger (e.g. !sign)" style="max-width: 180px;" />
-            <input type="text" id="snipExpInput" class="rack-input" placeholder="Expanded text (e.g. Best regards, Athul)" />
-            <button id="submitSnipBtn" class="synth-btn-pop" style="background: var(--synth-pink); color: #fff;">+ ADD SNIPPET</button>
-          </div>
-
-          <div class="rack-table-card">
-            <table class="rack-table">
-              <thead>
-                <tr>
-                  <th>Shortcut Trigger</th>
-                  <th>Expanded Output</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="flowSnipTableBody"></tbody>
-            </table>
-          </div>
-        </section>
-
-        <!-- VIEW 5: VOICE STYLE & 10K ADAPTIVE TWIN -->
-        <section id="view-style" class="synth-view">
-          <div class="synth-view-header">
-            <div>
-              <h1 class="synth-view-title">Voice Style & Personal Twin</h1>
-              <p style="color: var(--synth-yellow); font-size: 1rem; font-weight: 600;">10,000+ Word Milestone Adaptive Intent Engine & Profiles.</p>
-            </div>
-          </div>
-
-          <div class="synth-module-card">
-            <h3 style="font-size: 1.4rem; font-weight: 800; color: var(--synth-lime); margin-bottom: 0.5rem;">Adaptive Intent Reasoning (10K+ Words Unlocked)</h3>
-            <p style="font-size: 1.05rem; color: #D1D5DB; line-height: 1.6;">
-              When active, Flow inspects implicit speech context to automatically format Pull Requests, functions, and structured markdown action items.
-            </p>
-            <div style="margin-top: 1.25rem; display: flex; gap: 14px; align-items: center;">
-              <span class="synth-cat-tag" style="background: var(--synth-lime); font-size: 0.95rem; padding: 6px 14px;" id="adaptiveStatusTag">ACTIVE: Gold 10K+ Unlocked</span>
-              <button class="synth-btn-pop" id="toggle10kBtn" style="background: var(--synth-yellow);">⚡ Simulate 10K+ Words</button>
-            </div>
-          </div>
-        </section>
-
-        <!-- VIEW 6: NOTETAKER & SCRATCHPAD -->
-        <section id="view-scratchpad" class="synth-view">
-          <div class="synth-view-header">
-            <div>
-              <h1 class="synth-view-title">Cyber Scratchpad</h1>
-              <p style="color: var(--synth-lime); font-size: 1rem; font-weight: 600;">Dictate code, notes, and brainstorms.</p>
-            </div>
-          </div>
-          <textarea id="scratchpadArea" style="width: 100%; height: 350px; border-radius: 14px; border: 3px solid var(--synth-purple); background: #000; color: var(--synth-lime); font-family: var(--font-mono); font-size: 1.1rem; padding: 1.25rem; outline: none; box-shadow: 0 0 16px rgba(184, 107, 255, 0.2);" placeholder="Start dictating or typing here..."></textarea>
-        </section>
-      </main>
+        </div>
+      </div>
     </div>
+
+    <!-- Quiet Persistent Bottom Stats Strip -->
+    <footer class="bottom-stats-strip">
+      <div class="stat-item">
+        <span class="stat-label">Words Dictated:</span>
+        <span class="stat-value" id="statWordCount">10,050</span>
+      </div>
+      <div class="stat-separator">·</div>
+      <div class="stat-item">
+        <span class="stat-label">Typing Speed:</span>
+        <span class="stat-value" id="statWpm">145 WPM</span>
+      </div>
+      <div class="stat-separator">·</div>
+      <div class="stat-item">
+        <span class="stat-label">Time Saved:</span>
+        <span class="stat-value" id="statTimeSaved">7.2 hrs</span>
+      </div>
+      <div class="stat-separator">·</div>
+      <div class="stat-item">
+        <span class="stat-label">Milestone Rank:</span>
+        <span class="stat-value rank-badge" id="statRankBadge">10K Milestone Titan</span>
+      </div>
+      <div class="stat-separator">·</div>
+      <div class="stat-item">
+        <span class="stat-label">Egress:</span>
+        <span class="stat-value text-success" id="statEgress">0 bytes (Air-Gapped)</span>
+      </div>
+    </footer>
   </div>
 
   <script src="/static/js/app.js"></script>

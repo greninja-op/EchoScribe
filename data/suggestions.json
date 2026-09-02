@@ -1,0 +1,20 @@
+{
+  "supabase": {
+    "proposed_replacement": "Supabase",
+    "occurrences": 3,
+    "category": "tech",
+    "status": "pending"
+  },
+  "postgresql": {
+    "proposed_replacement": "PostgreSQL",
+    "occurrences": 2,
+    "category": "code",
+    "status": "pending"
+  },
+  "tailwind": {
+    "proposed_replacement": "TailwindCSS",
+    "occurrences": 2,
+    "category": "code",
+    "status": "pending"
+  }
+}

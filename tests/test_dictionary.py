@@ -11,9 +11,14 @@ class TestEchoScribeSuite(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.dict_file = Path(self.temp_dir.name) / "test_dictionary.json"
         self.snippets_file = Path(self.temp_dir.name) / "test_snippets.json"
+        self.suggestions_file = Path(self.temp_dir.name) / "test_suggestions.json"
         self.stats_file = Path(self.temp_dir.name) / "test_stats.json"
 
-        self.cd = CorrectionDictionary(filepath=self.dict_file, snippets_path=self.snippets_file)
+        self.cd = CorrectionDictionary(
+            filepath=self.dict_file,
+            snippets_path=self.snippets_file,
+            suggestions_path=self.suggestions_file,
+        )
         self.fi = FlowIntelligence(stats_path=self.stats_file)
 
     def tearDown(self):
@@ -85,6 +90,47 @@ class TestEchoScribeSuite(unittest.TestCase):
         self.assertEqual(res_git["inferred_intent"], "git_workflow")
         self.assertTrue(res_git["adapted_text"].startswith("feat: "))
 
+    def test_auto_learning_suggestions(self):
+        # Trigger detection of candidate words
+        new_disc = self.cd.detect_potential_learnings("We are connecting to supabase and redis database clusters")
+        self.assertGreater(len(new_disc), 0)
+
+        # Retrieve suggestions
+        suggestions = self.cd.get_suggestions()
+        self.assertTrue(any(s["phrase"] == "supabase" for s in suggestions))
+
+        # Accept suggestion into active vocabulary
+        accepted = self.cd.accept_suggestion("supabase")
+        self.assertTrue(accepted)
+        self.assertIn("supabase", self.cd.words)
+
+        # Dismiss suggestion
+        dismissed = self.cd.dismiss_suggestion("redis")
+        # redis might or might not be pending, but dismiss on existing works
+        if any(s["phrase"] == "redis" for s in suggestions):
+            self.assertTrue(dismissed)
+
+    def test_in_place_voice_editing(self):
+        last_transcript = "We basically need to fix the router and make sure the server responds with status code 200."
+        
+        # 1. Shorten
+        res_short = self.cd.detect_and_apply_in_place_edit("please make this shorter", last_transcript)
+        self.assertIsNotNone(res_short)
+        self.assertTrue(res_short["in_place_edit"])
+        self.assertEqual(res_short["command"], "shorten")
+
+        # 2. Formal / Professional
+        res_prof = self.cd.detect_and_apply_in_place_edit("make it formal", "hey we gotta deploy this build")
+        self.assertIsNotNone(res_prof)
+        self.assertEqual(res_prof["command"], "professional")
+        self.assertIn("Greetings", res_prof["corrected"])
+
+        # 3. Format as bullets
+        res_bullets = self.cd.detect_and_apply_in_place_edit("format as bullets", "task one. task two. task three.")
+        self.assertIsNotNone(res_bullets)
+        self.assertTrue(res_bullets["corrected"].startswith("- "))
+
 
 if __name__ == "__main__":
     unittest.main()
+
