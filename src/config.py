@@ -11,6 +11,7 @@ HISTORY_FILE = DATA_DIR / "history.json"
 SNIPPETS_FILE = DATA_DIR / "snippets.json"
 STATS_FILE = DATA_DIR / "stats.json"
 SUGGESTIONS_FILE = DATA_DIR / "suggestions.json"
+DB_PATH = DATA_DIR / "echoscribe.db"
 
 # Server configuration
 HOST = os.getenv("ECHOSCRIBE_HOST", "0.0.0.0")

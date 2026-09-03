@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional
 
 from .config import DICTIONARY_FILE, SNIPPETS_FILE, SUGGESTIONS_FILE
+from .db import db
 
 logger = logging.getLogger("echoscribe.dictionary")
 
@@ -62,7 +63,25 @@ class CorrectionDictionary:
         self.load_suggestions()
 
     def load(self) -> None:
-        """Load dictionary from disk."""
+        """Load dictionary from SQLite with legacy JSON fallback."""
+        self.db = db
+        try:
+            db_res = self.db.get_all_dictionary()
+            if db_res["words"]:
+                normalized = {}
+                for entry in db_res["entries"]:
+                    normalized[entry["phrase"]] = {
+                        "replacement": entry["replacement"],
+                        "category": entry.get("category", "tech"),
+                        "added_via": entry.get("added_via", "manual"),
+                        "usage_count": entry.get("usage_count", 0),
+                    }
+                self.words = normalized
+                self._recompile()
+                return
+        except Exception as e:
+            logger.warning(f"Could not load dictionary from SQLite: {e}")
+
         if not self.filepath.exists():
             self.filepath.parent.mkdir(parents=True, exist_ok=True)
             self._save_defaults()
@@ -336,6 +355,10 @@ class CorrectionDictionary:
             "added_via": added_via,
             "first_seen": time.time(),
         }
+        try:
+            self.db.add_dictionary_word(clean_key, clean_val, category=category, added_via=added_via)
+        except Exception as e:
+            logger.warning(f"Could not persist word to SQLite: {e}")
         return self.save()
 
     def detect_post_paste_correction(
@@ -383,6 +406,10 @@ class CorrectionDictionary:
         clean_key = spoken_phrase.strip().lower()
         if clean_key in self.words:
             del self.words[clean_key]
+            try:
+                self.db.remove_dictionary_word(clean_key)
+            except Exception as e:
+                logger.warning(f"Could not remove word from SQLite: {e}")
             return self.save()
         return False
 
@@ -468,6 +495,10 @@ class CorrectionDictionary:
                     replacements_applied.append(
                         {"from": m, "to": replacement, "type": "dictionary"}
                     )
+                    try:
+                        self.db.record_word_usage(m)
+                    except Exception:
+                        pass
                 corrected = rx.sub(replacement, corrected)
 
         # 3. Apply casing macros (camelCase, snake_case, kebab-case)

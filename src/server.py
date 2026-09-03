@@ -24,6 +24,7 @@ from .transcriber import TranscriberEngine
 from .transcription import select_default_engine
 from .audio_capture import AudioCapture
 from .flow_intelligence import FlowIntelligence
+from .db import db
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("echoscribe.server")
@@ -120,6 +121,10 @@ def _log_history(entry: Dict[str, Any]) -> None:
     history_log.insert(0, entry)
     if len(history_log) > MAX_HISTORY:
         history_log.pop()
+    try:
+        db.log_session(entry)
+    except Exception as e:
+        logger.debug(f"Could not persist session to SQLite: {e}")
     try:
         HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(HISTORY_FILE, "w", encoding="utf-8") as f:
@@ -600,6 +605,38 @@ async def get_ollama_status_endpoint() -> Dict[str, Any]:
         "ollama_url": "http://localhost:11434",
         "notice": "Ollama ready" if is_alive else "Ollama not detected — install from ollama.com",
     }
+
+
+@app.get("/api/history")
+async def get_history_endpoint(limit: int = 50) -> List[Dict[str, Any]]:
+    """Return recent dictation session records from embedded SQLite."""
+    try:
+        sessions = db.get_recent_sessions(limit=limit)
+        if sessions:
+            return sessions
+    except Exception as e:
+        logger.warning(f"Could not retrieve sessions from SQLite: {e}")
+    return history_log[:limit]
+
+
+@app.get("/api/history/search")
+async def search_history_endpoint(q: str = "", limit: int = 20) -> List[Dict[str, Any]]:
+    """Full-Text Search (FTS5) across recorded speech transcripts."""
+    try:
+        return db.search_sessions(q, limit=limit)
+    except Exception as e:
+        logger.warning(f"Full text search error: {e}")
+        return []
+
+
+@app.get("/api/stats")
+async def get_stats_endpoint() -> Dict[str, Any]:
+    """Return cumulative speech statistics from SQLite."""
+    try:
+        return db.get_stats()
+    except Exception as e:
+        logger.warning(f"Could not retrieve stats: {e}")
+        return {"total_words": 0, "total_duration_seconds": 0.0, "wpm": 145, "hours_saved": 0.0}
 
 
 # Serve static web interface

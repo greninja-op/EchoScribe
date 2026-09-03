@@ -5,137 +5,188 @@
       "replacement": "FastAPI",
       "category": "auto-learned",
       "added_via": "auto",
-      "first_seen": 1788415781.9503863
+      "first_seen": 1788416685.5366514
     },
     "fastapi": {
       "replacement": "FastAPI",
-      "category": "code"
-    },
-    "git hub": {
-      "replacement": "GitHub",
-      "category": "code"
-    },
-    "github": {
-      "replacement": "GitHub",
-      "category": "code"
-    },
-    "open ai": {
-      "replacement": "OpenAI",
-      "category": "code"
-    },
-    "openai": {
-      "replacement": "OpenAI",
-      "category": "code"
-    },
-    "whisper": {
-      "replacement": "Whisper",
-      "category": "code"
-    },
-    "wispr flow": {
-      "replacement": "Wispr Flow",
-      "category": "code"
-    },
-    "wispr": {
-      "replacement": "Wispr",
-      "category": "code"
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 2
     },
     "docker compose": {
       "replacement": "docker-compose",
-      "category": "code"
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 1
     },
-    "k eight s": {
-      "replacement": "k8s",
-      "category": "code"
+    "git hub": {
+      "replacement": "GitHub",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 1
     },
-    "kubernetes": {
-      "replacement": "Kubernetes",
-      "category": "code"
+    "github": {
+      "replacement": "GitHub",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 1
     },
-    "typescript": {
-      "replacement": "TypeScript",
-      "category": "code"
+    "open ai": {
+      "replacement": "OpenAI",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 1
     },
-    "javascript": {
-      "replacement": "JavaScript",
-      "category": "code"
+    "openai": {
+      "replacement": "OpenAI",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 1
+    },
+    "supabase": {
+      "replacement": "Supabase",
+      "category": "tech",
+      "added_via": "manual",
+      "usage_count": 1
     },
     "async await": {
       "replacement": "async/await",
-      "category": "code"
-    },
-    "next js": {
-      "replacement": "Next.js",
-      "category": "code"
-    },
-    "nextjs": {
-      "replacement": "Next.js",
-      "category": "code"
-    },
-    "vue js": {
-      "replacement": "Vue.js",
-      "category": "code"
-    },
-    "node js": {
-      "replacement": "Node.js",
-      "category": "code"
-    },
-    "tailwind css": {
-      "replacement": "TailwindCSS",
-      "category": "code"
-    },
-    "powershell": {
-      "replacement": "PowerShell",
-      "category": "code"
-    },
-    "py test": {
-      "replacement": "pytest",
-      "category": "code"
-    },
-    "pytest": {
-      "replacement": "pytest",
-      "category": "code"
-    },
-    "pydantic": {
-      "replacement": "Pydantic",
-      "category": "code"
-    },
-    "uvicorn": {
-      "replacement": "Uvicorn",
-      "category": "code"
-    },
-    "echoscribe": {
-      "replacement": "EchoScribe",
-      "category": "code"
-    },
-    "echo scribe": {
-      "replacement": "EchoScribe",
-      "category": "code"
-    },
-    "bridgemind": {
-      "replacement": "BridgeMind",
-      "category": "code"
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
     },
     "bridge mind": {
       "replacement": "BridgeMind",
-      "category": "code"
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "bridgemind": {
+      "replacement": "BridgeMind",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "echo scribe": {
+      "replacement": "EchoScribe",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "echoscribe": {
+      "replacement": "EchoScribe",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "javascript": {
+      "replacement": "JavaScript",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "k eight s": {
+      "replacement": "k8s",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "kubernetes": {
+      "replacement": "Kubernetes",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "next js": {
+      "replacement": "Next.js",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "nextjs": {
+      "replacement": "Next.js",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "node js": {
+      "replacement": "Node.js",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "powershell": {
+      "replacement": "PowerShell",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "py test": {
+      "replacement": "pytest",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "pydantic": {
+      "replacement": "Pydantic",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "pytest": {
+      "replacement": "pytest",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "tailwind css": {
+      "replacement": "TailwindCSS",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
     },
     "tauri": {
       "replacement": "Tauri",
-      "category": "code"
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "typescript": {
+      "replacement": "TypeScript",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "uvicorn": {
+      "replacement": "Uvicorn",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "vue js": {
+      "replacement": "Vue.js",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "whisper": {
+      "replacement": "Whisper",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "wispr": {
+      "replacement": "Wispr",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
+    },
+    "wispr flow": {
+      "replacement": "Wispr Flow",
+      "category": "code",
+      "added_via": "manual",
+      "usage_count": 0
     }
   },
-  "patterns": [
-    {
-      "pattern": "\\bcamel\\s+case\\s+([a-zA-Z0-9_]+)\\b",
-      "action": "camelCase"
-    },
-    {
-      "pattern": "\\bsnake\\s+case\\s+([a-zA-Z0-9_]+)\\b",
-      "action": "snake_case"
-    },
-    {
-      "pattern": "\\bkebab\\s+case\\s+([a-zA-Z0-9_]+)\\b",
-      "action": "kebab-case"
-    }
-  ]
+  "patterns": []
 }
