@@ -1,7 +1,7 @@
 {
   "total_words": 10500,
-  "total_sessions": 48,
-  "total_duration_sec": 666.0,
+  "total_sessions": 50,
+  "total_duration_sec": 668.0,
   "streak_days": 3,
   "favorite_intents": {
     "code": 14,
