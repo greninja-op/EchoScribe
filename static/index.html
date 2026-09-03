@@ -18,41 +18,14 @@
       </span>
     </div>
 
-    <!-- Tone Switcher (Segmented Control) -->
-    <nav class="tone-switcher" id="toneSwitcher">
-      <button class="tone-btn active" data-tone="clean">Clean</button>
-      <button class="tone-btn" data-tone="professional">Executive</button>
-      <button class="tone-btn" data-tone="bullets">Bullets</button>
-      <button class="tone-btn" data-tone="code">Code</button>
-      <button class="tone-btn" data-tone="raw">Raw</button>
-    </nav>
-
     <div class="topbar-right">
       <button class="icon-nav-btn" id="btnCommandMode" title="Command Mode: Voice-driven edit of selected text (Alt+C)">
         <span>⚡ Command Mode</span>
         <kbd class="kbd-meta">Alt+C</kbd>
       </button>
-      <select id="correctionStrengthSelect" class="strength-select" title="Correction Strength">
-        <option value="full" selected>Full Correction</option>
-        <option value="light">Light (Stutters)</option>
-        <option value="off">Off (Literal ASR)</option>
-      </select>
-      <select id="transcriptionEngineSelect" class="engine-select" title="Transcription Engine">
-        <option value="auto" selected>Auto: OS Detected</option>
-        <option value="windows_local">Windows Local (Whisper)</option>
-        <option value="macos_native">macOS Native (Apple Speech)</option>
-        <option value="model_api">Model/API (Cloud / Ollama)</option>
-      </select>
       <button class="icon-nav-btn active" id="bridgeToggleBtn" title="Swarm Bridge Armed">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
         <span>Swarm Bridge</span>
-      </button>
-      <button class="icon-nav-btn" id="openDictionaryTopBtn" title="Personal Dictionary">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>
-        <span>Dictionary</span>
-      </button>
-      <button class="icon-nav-btn" id="openPaletteBtn" title="Command Palette (⌘K)">
-        <kbd class="kbd-meta">⌘K</kbd>
       </button>
     </div>
   </header>
@@ -81,23 +54,6 @@
         </button>
       </nav>
 
-      <!-- Pinned Dictations -->
-      <div class="sidebar-section">
-        <div class="sidebar-section-header">
-          <span>Pinned</span>
-        </div>
-        <div class="sidebar-list" id="sidebarPinnedList">
-          <div class="sidebar-row active">
-            <span class="pinned-dot">●</span>
-            <span class="sidebar-row-label">Engineering Log · Auth Service</span>
-          </div>
-          <div class="sidebar-row">
-            <span class="pinned-dot">●</span>
-            <span class="sidebar-row-label">Pull Request Description</span>
-          </div>
-        </div>
-      </div>
-
       <!-- Recent Dictations List -->
       <div class="sidebar-section flex-grow">
         <div class="sidebar-section-header">
@@ -105,24 +61,6 @@
         </div>
         <div class="sidebar-list" id="sidebarRecentList">
           <!-- Dynamically populated entries -->
-        </div>
-      </div>
-
-      <!-- Sidebar Footer (Stats) -->
-      <div class="sidebar-footer">
-        <div class="stats-summary-box">
-          <div class="stat-line">
-            <span class="stat-lbl">Dictated:</span>
-            <span class="stat-val" id="statWordCount">10,050 words</span>
-          </div>
-          <div class="stat-line">
-            <span class="stat-lbl">Speed:</span>
-            <span class="stat-val" id="statWpm">145 WPM</span>
-          </div>
-          <div class="stat-line">
-            <span class="stat-lbl">Saved:</span>
-            <span class="stat-val" id="statTimeSaved">7.2 hrs</span>
-          </div>
         </div>
       </div>
     </aside>
@@ -194,6 +132,12 @@
               <line x1="12" x2="12" y1="19" y2="22"/>
             </svg>
           </button>
+          <button type="button" class="composer-pause-btn" id="composerPauseBtn" title="Pause / Resume Recording" style="display: none;">
+            <svg class="pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="6" y="4" width="4" height="16"/>
+              <rect x="14" y="4" width="4" height="16"/>
+            </svg>
+          </button>
           <div class="composer-placeholder" id="composerPlaceholder">
             <span>Hold <kbd class="kbd-meta">Space</kbd> or speak a directive...</span>
           </div>
@@ -222,7 +166,7 @@
       <!-- Universal Header Bar -->
       <div class="artifact-header">
         <div class="artifact-header-left">
-          <div class="artifact-view-toggle">
+          <div class="artifact-view-toggle" id="artifactViewToggle">
             <button class="view-toggle-btn active" id="btnArtifactCorrected" title="Corrected View">Corrected</button>
             <button class="view-toggle-btn" id="btnArtifactRaw" title="Raw Code / Diff">Raw</button>
           </div>
@@ -234,9 +178,6 @@
           <button class="artifact-tool-btn" id="btnArtifactCopy" title="Copy Dictionary">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
             <span>Copy</span>
-          </button>
-          <button class="artifact-tool-btn icon-only" id="btnArtifactExpand" title="Expand Fullscreen">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
           </button>
           <button class="artifact-tool-btn icon-only close-btn" id="btnArtifactClose" title="Close Panel">✕</button>
         </div>

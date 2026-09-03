@@ -12,15 +12,23 @@
 class EchoScribeApp {
   constructor() {
     this.isRecording = false;
+    this.isPaused = false;
     this.activeTone = "clean";
     this.localOnly = true;
     this.swarmArmed = true;
     this.activeAppTarget = "VS Code";
     this.dictionaryData = {};
     this.activeArtifactMode = "corrected"; // "corrected" or "raw"
+    this.currentArtifactType = "dictionary"; // "dictionary" or "settings"
     this.correctionStrength = "full";
+    this.activeEngineId = "auto";
+    this.selectedAudioDeviceId = localStorage.getItem("echoscribe_audio_device") || "default";
     this.pendingCommandReplacement = "";
     this.pendingCommandTargetEl = null;
+    this.pulseAnimFrame = null;
+    this.mediaStream = null;
+    this.audioContext = null;
+    this.audioAnalyser = null;
 
     this.initElements();
     this.initEvents();
@@ -29,13 +37,8 @@ class EchoScribeApp {
 
   initElements() {
     // Window Topbar
-    this.toneSwitcher = document.getElementById("toneSwitcher");
     this.btnCommandMode = document.getElementById("btnCommandMode");
-    this.correctionStrengthSelect = document.getElementById("correctionStrengthSelect");
-    this.transcriptionEngineSelect = document.getElementById("transcriptionEngineSelect");
     this.bridgeToggleBtn = document.getElementById("bridgeToggleBtn");
-    this.openDictionaryTopBtn = document.getElementById("openDictionaryTopBtn");
-    this.openPaletteBtn = document.getElementById("openPaletteBtn");
     this.airgapBadge = document.getElementById("airgapBadge");
 
     // Sidebar
@@ -44,9 +47,6 @@ class EchoScribeApp {
     this.btnNavSnippets = document.getElementById("btnNavSnippets");
     this.btnNavSettings = document.getElementById("btnNavSettings");
     this.sidebarRecentList = document.getElementById("sidebarRecentList");
-    this.statWordCount = document.getElementById("statWordCount");
-    this.statWpm = document.getElementById("statWpm");
-    this.statTimeSaved = document.getElementById("statTimeSaved");
 
     // Main Pane
     this.conversationThread = document.getElementById("conversationThread");
@@ -62,6 +62,7 @@ class EchoScribeApp {
     this.currentEgressLabel = document.getElementById("currentEgressLabel");
     this.composerPill = document.getElementById("composerPill");
     this.composerMicBtn = document.getElementById("composerMicBtn");
+    this.composerPauseBtn = document.getElementById("composerPauseBtn");
     this.copyLatestBtn = document.getElementById("copyLatestBtn");
     this.dispatchSwarmBtn = document.getElementById("dispatchSwarmBtn");
     this.suggestionsChipsRow = document.getElementById("suggestionsChipsRow");
@@ -74,12 +75,12 @@ class EchoScribeApp {
 
     // Universal Right-Panel Artifact Viewer
     this.rightPanel = document.getElementById("rightArtifactPanel");
+    this.artifactViewToggle = document.getElementById("artifactViewToggle");
     this.btnArtifactCorrected = document.getElementById("btnArtifactCorrected");
     this.btnArtifactRaw = document.getElementById("btnArtifactRaw");
     this.artifactTitle = document.getElementById("artifactTitle");
     this.artifactBadge = document.getElementById("artifactBadge");
     this.btnArtifactCopy = document.getElementById("btnArtifactCopy");
-    this.btnArtifactExpand = document.getElementById("btnArtifactExpand");
     this.btnArtifactClose = document.getElementById("btnArtifactClose");
     this.artifactContentBody = document.getElementById("artifactContentBody");
 
@@ -89,36 +90,19 @@ class EchoScribeApp {
   }
 
   initEvents() {
-    // Tone Switcher Buttons
-    this.toneSwitcher?.querySelectorAll(".tone-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        this.toneSwitcher.querySelectorAll(".tone-btn").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        this.activeTone = btn.getAttribute("data-tone");
-        this.currentToneLabel.innerText = `Tone: ${btn.innerText}`;
-      });
-    });
-
     // Topbar Actions
     this.btnCommandMode?.addEventListener("click", () => this.triggerCommandMode());
-    this.correctionStrengthSelect?.addEventListener("change", (e) => {
-      this.correctionStrength = e.target.value;
-    });
-    this.transcriptionEngineSelect?.addEventListener("change", (e) => {
-      this.switchEngine(e.target.value);
-    });
-    this.openDictionaryTopBtn?.addEventListener("click", () => this.openDictionaryArtifact());
-    this.btnNavDictionary?.addEventListener("click", () => this.openDictionaryArtifact());
     this.bridgeToggleBtn?.addEventListener("click", () => this.toggleSwarmBridge());
-    this.openPaletteBtn?.addEventListener("click", () => this.openPalette());
 
     // Sidebar Nav
     this.btnNewDictation?.addEventListener("click", () => this.startRecording());
+    this.btnNavDictionary?.addEventListener("click", () => this.openDictionaryArtifact());
     this.btnNavSnippets?.addEventListener("click", () => this.openPalette());
-    this.btnNavSettings?.addEventListener("click", () => this.openDictionaryArtifact());
+    this.btnNavSettings?.addEventListener("click", () => this.openSettingsArtifact());
 
-    // Mic Button & Composer Actions
+    // Mic Button, Pause Button & Composer Actions
     this.composerMicBtn?.addEventListener("click", () => this.toggleRecording());
+    this.composerPauseBtn?.addEventListener("click", () => this.togglePause());
     this.copyLatestBtn?.addEventListener("click", () => this.copyLatestTranscript());
     this.dispatchSwarmBtn?.addEventListener("click", () => this.dispatchLatestToSwarm());
     this.btnDiscardCommand?.addEventListener("click", () => this.discardCommandEdit());
@@ -126,10 +110,9 @@ class EchoScribeApp {
 
     // Right-Panel Controls
     this.btnArtifactClose?.addEventListener("click", () => this.closeArtifact());
-    this.btnArtifactExpand?.addEventListener("click", () => this.rightPanel.classList.toggle("fullscreen"));
     this.btnArtifactCorrected?.addEventListener("click", () => this.setArtifactMode("corrected"));
     this.btnArtifactRaw?.addEventListener("click", () => this.setArtifactMode("raw"));
-    this.btnArtifactCopy?.addEventListener("click", () => this.copyDictionary());
+    this.btnArtifactCopy?.addEventListener("click", () => this.copyArtifactData());
 
     // Global Hotkeys: Spacebar (Hold-to-talk), ⌘K, Alt+C
     let spaceDown = false;
@@ -199,24 +182,145 @@ class EchoScribeApp {
   startRecording() {
     if (this.isRecording) return;
     this.isRecording = true;
+    this.isPaused = false;
 
     this.composerMicBtn.classList.add("recording");
+    this.composerMicBtn.classList.remove("is-paused");
     this.composerPill.classList.add("recording");
+    if (this.composerPauseBtn) {
+      this.composerPauseBtn.style.display = "inline-flex";
+      this.composerPauseBtn.classList.remove("active-paused");
+      this.composerPauseBtn.title = "Pause Recording";
+      this.composerPauseBtn.innerHTML = `
+        <svg class="pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="6" y="4" width="4" height="16"/>
+          <rect x="14" y="4" width="4" height="16"/>
+        </svg>
+      `;
+    }
+
     this.liveStreamingTurn.style.display = "flex";
     this.liveTranscriptText.innerHTML = "";
     this.liveReplacementsContainer.innerHTML = "";
     this.liveStreamMeta.innerText = `Recording · Tone: ${this.activeTone}`;
 
+    // Initialize audio reactivity for integrated mic pulse
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      const audioConstraints = (this.selectedAudioDeviceId && this.selectedAudioDeviceId !== "default")
+        ? { audio: { deviceId: { exact: this.selectedAudioDeviceId } } }
+        : { audio: true };
+
+      navigator.mediaDevices.getUserMedia(audioConstraints)
+        .then((stream) => {
+          this.mediaStream = stream;
+          try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+              this.audioContext = new AudioCtx();
+              this.audioAnalyser = this.audioContext.createAnalyser();
+              this.audioAnalyser.fftSize = 64;
+              const source = this.audioContext.createMediaStreamSource(stream);
+              source.connect(this.audioAnalyser);
+              const dataArray = new Uint8Array(this.audioAnalyser.frequencyBinCount);
+
+              const updatePulse = () => {
+                if (!this.isRecording || this.isPaused) return;
+                this.audioAnalyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                const avg = sum / dataArray.length;
+                const intensity = Math.min(2.2, Math.max(0.7, avg / 24));
+                this.composerMicBtn?.style.setProperty("--audio-intensity", intensity.toFixed(2));
+                this.pulseAnimFrame = requestAnimationFrame(updatePulse);
+              };
+              this.pulseAnimFrame = requestAnimationFrame(updatePulse);
+            }
+          } catch (e) {
+            console.debug("Audio analyzer note:", e);
+          }
+        })
+        .catch((err) => {
+          console.debug("Microphone stream note:", err);
+        });
+    }
+
     // Stream simulated tokens with smooth fade-in
     this.simulateStreamingTokens();
+  }
+
+  togglePause() {
+    if (!this.isRecording) return;
+    this.isPaused = !this.isPaused;
+
+    if (this.isPaused) {
+      this.composerMicBtn.classList.add("is-paused");
+      this.composerPauseBtn?.classList.add("active-paused");
+      if (this.composerPauseBtn) {
+        this.composerPauseBtn.title = "Resume Recording";
+        this.composerPauseBtn.innerHTML = `
+          <svg class="play-icon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+        `;
+      }
+      this.liveStreamMeta.innerText = "Paused";
+    } else {
+      this.composerMicBtn.classList.remove("is-paused");
+      this.composerPauseBtn?.classList.remove("active-paused");
+      if (this.composerPauseBtn) {
+        this.composerPauseBtn.title = "Pause Recording";
+        this.composerPauseBtn.innerHTML = `
+          <svg class="pause-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="4" width="4" height="16"/>
+            <rect x="14" y="4" width="4" height="16"/>
+          </svg>
+        `;
+      }
+      this.liveStreamMeta.innerText = `Recording · Tone: ${this.activeTone}`;
+
+      // Resume pulse loop
+      if (this.audioAnalyser) {
+        const dataArray = new Uint8Array(this.audioAnalyser.frequencyBinCount);
+        const updatePulse = () => {
+          if (!this.isRecording || this.isPaused) return;
+          this.audioAnalyser.getByteFrequencyData(dataArray);
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+          const avg = sum / dataArray.length;
+          const intensity = Math.min(2.2, Math.max(0.7, avg / 24));
+          this.composerMicBtn?.style.setProperty("--audio-intensity", intensity.toFixed(2));
+          this.pulseAnimFrame = requestAnimationFrame(updatePulse);
+        };
+        this.pulseAnimFrame = requestAnimationFrame(updatePulse);
+      }
+    }
   }
 
   stopRecording() {
     if (!this.isRecording) return;
     this.isRecording = false;
+    this.isPaused = false;
 
-    this.composerMicBtn.classList.remove("recording");
+    if (this.pulseAnimFrame) {
+      cancelAnimationFrame(this.pulseAnimFrame);
+      this.pulseAnimFrame = null;
+    }
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach((track) => track.stop());
+      this.mediaStream = null;
+    }
+    if (this.audioContext) {
+      try { this.audioContext.close(); } catch(e) {}
+      this.audioContext = null;
+    }
+
+    this.composerMicBtn.classList.remove("recording", "is-paused");
+    this.composerMicBtn.style.removeProperty("--audio-intensity");
     this.composerPill.classList.remove("recording");
+    if (this.composerPauseBtn) {
+      this.composerPauseBtn.style.display = "none";
+      this.composerPauseBtn.classList.remove("active-paused");
+    }
     this.liveStreamingTurn.style.display = "none";
 
     const text = this.liveTranscriptText.innerText.trim();
@@ -238,7 +342,14 @@ class EchoScribeApp {
     let idx = 0;
 
     const interval = setInterval(() => {
-      if (!this.isRecording || idx >= phrase.length) {
+      if (!this.isRecording) {
+        clearInterval(interval);
+        return;
+      }
+      if (this.isPaused) {
+        return; // Hold streaming while paused
+      }
+      if (idx >= phrase.length) {
         clearInterval(interval);
         return;
       }
@@ -267,9 +378,11 @@ class EchoScribeApp {
     this.conversationThread.appendChild(turn);
     turn.scrollIntoView({ behavior: "smooth" });
 
-    // Update stats
-    const current = parseInt(this.statWordCount.innerText.replace(/,/g, "")) || 10050;
-    this.statWordCount.innerText = (current + text.split(" ").length).toLocaleString() + " words";
+    // Update stats if element exists
+    if (this.statWordCount) {
+      const current = parseInt(this.statWordCount.innerText.replace(/,/g, "")) || 10050;
+      this.statWordCount.innerText = (current + text.split(" ").length).toLocaleString() + " words";
+    }
   }
 
   copyLatestTranscript() {
@@ -424,6 +537,7 @@ class EchoScribeApp {
 
   async switchEngine(engineId) {
     try {
+      this.activeEngineId = engineId;
       const res = await fetch("/api/transcription/engine/select", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -438,9 +552,20 @@ class EchoScribeApp {
     }
   }
 
+  async openSettingsArtifact() {
+    this.currentArtifactType = "settings";
+    this.artifactTitle.innerText = "Settings";
+    this.artifactBadge.innerText = "· CONFIG";
+    if (this.artifactViewToggle) this.artifactViewToggle.style.display = "none";
+    this.rightPanel.classList.add("open");
+    await this.renderSettingsContent();
+  }
+
   openDictionaryArtifact() {
+    this.currentArtifactType = "dictionary";
     this.artifactTitle.innerText = "Personal Dictionary";
     this.artifactBadge.innerText = "· DICT";
+    if (this.artifactViewToggle) this.artifactViewToggle.style.display = "flex";
     this.rightPanel.classList.add("open");
     this.renderDictionaryContent();
   }
@@ -451,9 +576,136 @@ class EchoScribeApp {
 
   setArtifactMode(mode) {
     this.activeArtifactMode = mode;
-    this.btnArtifactCorrected.classList.toggle("active", mode === "corrected");
-    this.btnArtifactRaw.classList.toggle("active", mode === "raw");
-    this.renderDictionaryContent();
+    this.btnArtifactCorrected?.classList.toggle("active", mode === "corrected");
+    this.btnArtifactRaw?.classList.toggle("active", mode === "raw");
+    if (this.currentArtifactType === "dictionary") {
+      this.renderDictionaryContent();
+    }
+  }
+
+  async renderSettingsContent() {
+    // Enumerate audio input devices
+    let audioDeviceOptions = `<option value="default">Default System Microphone</option>`;
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter((d) => d.kind === "audioinput");
+        if (audioInputs.length > 0) {
+          audioDeviceOptions = audioInputs.map((d, i) => {
+            const isSel = d.deviceId === this.selectedAudioDeviceId ? "selected" : "";
+            const label = d.label || `Microphone ${i + 1}`;
+            return `<option value="${d.deviceId}" ${isSel}>${this.escapeHtml(label)}</option>`;
+          }).join("");
+        }
+      }
+    } catch (e) {
+      console.debug("Could not enumerate audio devices:", e);
+    }
+
+    const html = `
+      <div class="settings-view-container">
+        <!-- Audio Input Device -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <span class="settings-card-label">Microphone Input Device</span>
+          </div>
+          <p class="settings-card-desc">Select the physical audio input stream used for speech dictation.</p>
+          <div class="settings-card-control">
+            <select class="settings-field-select" id="settingAudioDevice">
+              ${audioDeviceOptions}
+            </select>
+          </div>
+        </div>
+
+        <!-- Transcription Engine Selection -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <span class="settings-card-label">Transcription Engine</span>
+          </div>
+          <p class="settings-card-desc">Choose between local on-device Whisper, macOS Native Speech, or cloud Model API.</p>
+          <div class="settings-card-control">
+            <select class="settings-field-select" id="settingTranscriptionEngine">
+              <option value="auto" ${this.activeEngineId === "auto" ? "selected" : ""}>Auto: OS Detected</option>
+              <option value="windows_local" ${this.activeEngineId === "windows_local" ? "selected" : ""}>Windows Local (Whisper on-device)</option>
+              <option value="macos_native" ${this.activeEngineId === "macos_native" ? "selected" : ""}>macOS Native (Apple Speech.framework)</option>
+              <option value="model_api" ${this.activeEngineId === "model_api" ? "selected" : ""}>Model/API (Cloud Whisper / Local Ollama)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Correction Strength -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <span class="settings-card-label">Correction Intelligence Strength</span>
+          </div>
+          <p class="settings-card-desc">Controls how aggressively speech fillers ("um", "uh", stutters, false starts) are removed.</p>
+          <div class="settings-card-control">
+            <select class="settings-field-select" id="settingCorrectionStrength">
+              <option value="full" ${this.correctionStrength === "full" ? "selected" : ""}>Full Correction (Disfluencies & Stutters)</option>
+              <option value="light" ${this.correctionStrength === "light" ? "selected" : ""}>Light (Stutters & Repeats Only)</option>
+              <option value="off" ${this.correctionStrength === "off" ? "selected" : ""}>Off (Literal Verbatim Speech)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Air-Gap Privacy Mode Toggle -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <span class="settings-card-label">Air-Gap Local Guarantee</span>
+            <label class="settings-toggle-switch">
+              <input type="checkbox" id="settingAirGapToggle" ${this.localOnly ? "checked" : ""} />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <p class="settings-card-desc">When enabled, EchoScribe strictly forbids external cloud network egress (0 bytes outbound).</p>
+        </div>
+
+        <!-- Swarm Bridge Target -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <span class="settings-card-label">CLI Workflow Swarm Bridge</span>
+            <span class="coral-chip" style="font-size: 11px;">Port 8099</span>
+          </div>
+          <p class="settings-card-desc">Direct dispatch destination for multi-agent swarm task execution.</p>
+          <input type="text" class="dict-input" style="margin-top: 4px;" value="http://localhost:8099" readonly />
+        </div>
+      </div>
+    `;
+
+    this.artifactContentBody.innerHTML = html;
+
+    // Bind Settings View Controls
+    const deviceSelect = this.artifactContentBody.querySelector("#settingAudioDevice");
+    deviceSelect?.addEventListener("change", (e) => {
+      this.selectedAudioDeviceId = e.target.value;
+      localStorage.setItem("echoscribe_audio_device", this.selectedAudioDeviceId);
+    });
+
+    const engineSelect = this.artifactContentBody.querySelector("#settingTranscriptionEngine");
+    engineSelect?.addEventListener("change", (e) => {
+      this.switchEngine(e.target.value);
+    });
+
+    const strengthSelect = this.artifactContentBody.querySelector("#settingCorrectionStrength");
+    strengthSelect?.addEventListener("change", (e) => {
+      this.correctionStrength = e.target.value;
+    });
+
+    const airGapToggle = this.artifactContentBody.querySelector("#settingAirGapToggle");
+    airGapToggle?.addEventListener("change", async (e) => {
+      const enabled = e.target.checked;
+      this.localOnly = enabled;
+      if (this.currentEgressLabel) {
+        this.currentEgressLabel.innerText = enabled ? "0 bytes egress (Air-Gapped)" : "Cloud egress allowed";
+      }
+      try {
+        await fetch("/api/config/local-only", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enabled })
+        });
+      } catch (err) {}
+    });
   }
 
   renderDictionaryContent() {
@@ -529,11 +781,28 @@ class EchoScribeApp {
       formData.append("spoken", spoken);
       formData.append("replacement", replacement);
       await fetch("/api/dictionary/add", { method: "POST", body: formData });
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Could not save dictionary term:", e);
+    }
   }
 
   copyDictionary() {
     navigator.clipboard.writeText(JSON.stringify(this.dictionaryData, null, 2));
+  }
+
+  copyArtifactData() {
+    if (this.currentArtifactType === "settings") {
+      const settingsPayload = {
+        active_engine: this.activeEngineId,
+        correction_strength: this.correctionStrength,
+        air_gap_local_only: this.localOnly,
+        audio_input_device: this.selectedAudioDeviceId,
+        bridge_target: "http://localhost:8099"
+      };
+      navigator.clipboard.writeText(JSON.stringify(settingsPayload, null, 2));
+    } else {
+      this.copyDictionary();
+    }
     const orig = this.btnArtifactCopy.innerHTML;
     this.btnArtifactCopy.innerHTML = `<span>✔ Copied</span>`;
     setTimeout(() => { this.btnArtifactCopy.innerHTML = orig; }, 1500);

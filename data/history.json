@@ -16,6 +16,25 @@
       "auto_actions": [],
       "voice_twin_adaptation": "Profile synced with user developer patterns."
     },
+    "timestamp": 1788417275.7813222
+  },
+  {
+    "success": true,
+    "transcript": "",
+    "raw_transcript": "",
+    "replacements": [],
+    "tone": "clean",
+    "engine": "Windows Local (base.en)",
+    "latency_ms": 0.0,
+    "in_place_edit_applied": false,
+    "intent_prediction": {
+      "intent_feature_active": true,
+      "inferred_intent": "general_note",
+      "confidence": 0.88,
+      "adapted_text": "",
+      "auto_actions": [],
+      "voice_twin_adaptation": "Profile synced with user developer patterns."
+    },
     "timestamp": 1788416747.4174325
   }
 ]
