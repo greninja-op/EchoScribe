@@ -1,9 +1,96 @@
 /* ==========================================================================
    EchoScribe — Claude.ai Visual System
-   Warm charcoal canvas, terracotta brand accent, and editorial serif display.
+   Warm charcoal canvas (#262624), seamless dark sidebar (#1E1E1C),
+   terracotta brand accent (#D97757), and editorial serif display.
    Zero glassmorphism, zero drop shadows, zero card borders.
    100% color and palette parity with CLI Workflow.
    ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Canvas & Warm Charcoal Surfaces */
+  --bg-canvas: #262624;          /* Main conversation / thread surface */
+  --bg-sidebar: #1E1E1C;         /* Seamless left sidebar and right panel */
+  --bg-panel: #1A1918;           /* Slightly darker right-panel surface */
+  --bg-elevated: #2E2D2A;        /* Subtle hover/active row highlight */
+  --bg-hover: #33312D;           /* Slightly lighter row hover */
+  --bg-active: #3A3834;          /* Active selection fill */
+  --bg-input: #1E1E1C;           /* Input bar pill background */
+
+  /* Aliases guaranteeing 100% identical rendering across CLI Workflow & EchoScribe */
+  --bg-primary: #262624;
+  --bg-secondary: #1E1E1C;
+  --bg-tertiary: #2E2D2A;
+
+  /* Hairline Borders (Subtle, never boxy) */
+  --border-hairline: rgba(255, 255, 255, 0.08);
+  --border-subtle: #333230;
+  --border-strong: #45433F;
+  --border-focus: #D97757;
+  --border-visible: rgba(255, 255, 255, 0.08);
+
+  /* Typography Pairing: Editorial Serif + Clean Humanist Sans */
+  --font-serif: 'Lora', 'Source Serif 4', Georgia, serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', Consolas, monospace;
+
+  /* Type Scale */
+  --text-xs: 0.75rem;      /* 12px - timestamps, tags, metadata */
+  --text-sm: 0.8125rem;    /* 13px - secondary text, sidebar labels */
+  --text-base: 0.875rem;   /* 14px - body copy, conversation turns */
+  --text-md: 1rem;         /* 16px - subheadings, artifacts headers */
+  --text-lg: 1.1875rem;    /* 19px - section titles */
+  --text-xl: 1.375rem;     /* 22px - display headings */
+  --text-2xl: 1.625rem;    /* 26px - modal titles */
+
+  /* Text Colors: Warm Off-White & Muted Beige */
+  --text-primary: #F5F1EA;       /* Warm cream off-white */
+  --text-secondary: #A39E93;     /* Muted warm gray-beige */
+  --text-tertiary: #736F66;      /* Subdued metadata */
+  --text-disabled: #54514B;      /* Inactive items */
+
+  /* Brand Accent: Single Terracotta / Warm Coral */
+  --accent: #D97757;
+  --accent-hover: #E08567;
+  --accent-muted: rgba(217, 119, 87, 0.14);
+  --accent-coral: #D97757;
+  --accent-coral-hover: #E08567;
+  --accent-coral-subtle: rgba(217, 119, 87, 0.14);
+  --accent-coral-border: rgba(217, 119, 87, 0.35);
+
+  /* Semantic Status Dots (Quiet, small dots — no big colored badges) */
+  --success: #34D399;
+  --color-success: #34D399;
+  --color-success-dot: #10B981;
+  --warning: #F59E0B;
+  --color-warning-dot: #F59E0B;
+  --error: #EF4444;
+  --color-danger-dot: #EF4444;
+  --color-info-dot: #60A5FA;
+
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Radius */
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+
+  /* Transitions */
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --ease: ease;
+}
 
 * {
   box-sizing: border-box;
@@ -15,8 +102,8 @@ html, body {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  background-color: var(--bg-canvas);
-  color: var(--text-primary);
+  background-color: #262624 !important;
+  color: #F5F1EA !important;
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.5;
@@ -74,8 +161,8 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
    ========================================================================== */
 .window-topbar {
   height: 44px;
-  background: var(--bg-sidebar);
-  border-bottom: 1px solid var(--border-hairline);
+  background: #1E1E1C !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -115,10 +202,10 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
   display: flex;
   align-items: center;
   gap: 2px;
-  background: var(--bg-canvas);
+  background: #262624 !important;
   padding: 2px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border-hairline);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 .tone-btn {
@@ -152,7 +239,7 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
 
 .icon-nav-btn {
   background: transparent;
-  border: 1px solid var(--border-hairline);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   padding: 4px 8px;
@@ -189,8 +276,8 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
    ========================================================================== */
 .left-sidebar {
   width: 240px;
-  background: var(--bg-sidebar);
-  border-right: 1px solid var(--border-hairline);
+  background: #1E1E1C !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -202,7 +289,7 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
   display: flex;
   flex-direction: column;
   gap: 2px;
-  border-bottom: 1px solid var(--border-hairline);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sidebar-nav-item {
@@ -242,7 +329,7 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
 .sidebar-section.flex-grow {
   flex: 1;
   overflow-y: auto;
-  border-top: 1px solid var(--border-hairline);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sidebar-section-header {
@@ -293,8 +380,8 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
 
 .sidebar-footer {
   padding: var(--space-3);
-  border-top: 1px solid var(--border-hairline);
-  background: var(--bg-sidebar);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: #1E1E1C !important;
 }
 
 .stats-summary-box {
@@ -321,7 +408,7 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
    ========================================================================== */
 .main-pane {
   flex: 1;
-  background: var(--bg-canvas);
+  background: #262624 !important;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -410,8 +497,8 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
    ========================================================================== */
 .composer-container {
   padding: var(--space-3) var(--space-6) var(--space-3) var(--space-6);
-  background: var(--bg-canvas);
-  border-top: 1px solid var(--border-hairline);
+  background: #262624 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -445,8 +532,8 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
 .composer-pill {
   display: flex;
   align-items: center;
-  background: var(--bg-input);
-  border: 1px solid var(--border-hairline);
+  background: #1E1E1C !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: var(--radius-pill);
   padding: 6px var(--space-3);
   gap: var(--space-3);
@@ -457,7 +544,7 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
 }
 
 .composer-pill:focus-within, .composer-pill.recording {
-  border-color: var(--border-focus);
+  border-color: var(--border-focus) !important;
 }
 
 .composer-mic-btn {
@@ -536,8 +623,8 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
    ========================================================================== */
 .right-panel {
   width: 440px;
-  background: var(--bg-panel);
-  border-left: 1px solid var(--border-hairline);
+  background: #1A1918 !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
   display: none;
   flex-direction: column;
   flex-shrink: 0;
@@ -557,8 +644,8 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
 
 .artifact-header {
   height: 44px;
-  background: var(--bg-sidebar);
-  border-bottom: 1px solid var(--border-hairline);
+  background: #1E1E1C !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -616,7 +703,7 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
 
 .artifact-tool-btn {
   background: transparent;
-  border: 1px solid var(--border-hairline);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-xs);
   color: var(--text-secondary);
   font-size: 11px;
@@ -657,8 +744,8 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
   align-items: center;
   justify-content: space-between;
   padding: var(--space-2) var(--space-3);
-  background: var(--bg-sidebar);
-  border: 1px solid var(--border-hairline);
+  background: #1E1E1C !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
   font-size: 12px;
@@ -673,13 +760,13 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
   gap: var(--space-2);
   margin-top: var(--space-4);
   padding-top: var(--space-3);
-  border-top: 1px solid var(--border-hairline);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .dict-input {
   flex: 1;
-  background: var(--bg-input);
-  border: 1px solid var(--border-hairline);
+  background: #1E1E1C !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: var(--radius-xs);
   padding: 5px var(--space-2);
   color: var(--text-primary);
@@ -704,7 +791,7 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
 
 /* ==========================================================================
    COMMAND PALETTE MODAL (⌘K)
-   ========================================================================== */
+   ========================================================================= */
 .palette-overlay {
   position: fixed;
   inset: 0;
@@ -720,8 +807,8 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
 
 .palette-modal {
   width: 560px;
-  background: var(--bg-sidebar);
-  border: 1px solid var(--border-hairline);
+  background: #1E1E1C !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: none;
@@ -731,7 +818,7 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
   display: flex;
   align-items: center;
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border-hairline);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   gap: var(--space-3);
   color: var(--text-secondary);
 }
@@ -790,8 +877,8 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
 /* Correction Strength Select & Engine Select */
 .strength-select,
 .engine-select {
-  background: var(--bg-canvas);
-  border: 1px solid var(--border-hairline);
+  background: #262624 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   font-size: 11px;
@@ -818,8 +905,8 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
   max-width: 760px;
   width: 100%;
   margin: 0 auto;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-hairline);
+  background: #2E2D2A !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: var(--radius-sm);
   padding: var(--space-3);
   display: flex;
