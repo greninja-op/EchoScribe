@@ -1,21 +1,18 @@
-# EchoScribe 🎙️
+# Kelvra Voice 🎙️
 
 **On-device Audio Transcription, Continuous Dictation & Developer Correction Dictionary Engine**
 
-EchoScribe is a high-performance, background speech-to-text service designed for developers and workflow tools (such as `cli-workflow`). It bridges on-device neural transcription (NVIDIA Parakeet TDT / Sherpa-ONNX / Whisper) with a programmable domain correction dictionary that enforces accurate programming terms, case formatting (`camelCase`, `snake_case`, `kebab-case`), and zero-error API capture.
+Kelvra Voice (formerly EchoScribe) is a high-performance, background speech-to-text service designed for developers and workflow tools (such as `kelvra-bench`). It bridges on-device neural transcription (Windows Local Whisper / macOS Native Speech / Model-API) with a programmable domain correction dictionary backed by embedded SQLite with FTS5 search.
 
 ---
 
 ## Features
 
-- **⚡ Blazing Fast On-Device Transcription**: Supports local NVIDIA Parakeet TDT 0.6B (via `sherpa-onnx`) running ~40× real-time on standard CPU with int8 quantization.
-- **📖 Intelligent Correction Dictionary**: Fixes misheard developer jargon (e.g. `fast api` ➔ `FastAPI`, `open ai` ➔ `OpenAI`, `docker compose` ➔ `docker-compose`).
-- **🔤 Voice Casing Macros**: Dictate casing in real time:
-  - *"camel case user profile"* ➔ `userProfile`
-  - *"snake case get user by id"* ➔ `get_user_by_id`
-  - *"kebab case api gateway"* ➔ `api-gateway`
-- **🌐 Universal REST API**: Background service running on `http://localhost:8765` connects to any app, CLI, or desktop assistant.
-- **🖥️ Live HUD Dashboard**: Interactive dark-mode web UI with live audio visualizer, mic capture, dictionary editor, and rule tester.
+- **⚡ Blazing Fast On-Device Transcription**: Multi-engine transcription architecture supporting Windows Local Whisper, macOS Native Speech, and Model/API with zero network egress in Air-Gap mode.
+- **📖 Embedded SQLite Correction Dictionary**: Self-learning technical dictionary storing term frequencies, homophone replacements, and fast FTS5 full-text transcript search.
+- **🔤 Voice Casing Macros**: Dictate casing in real time (`camelCase`, `snake_case`, `kebab-case`).
+- **🌐 Universal REST API**: Background service running on `http://localhost:8765` connects directly to `kelvra-bench` (port 8099).
+- **🖥️ Live HUD Dashboard**: Interactive Claude.ai-styled interface with pulsing audio-reactive mic, pause/resume toggle, and dedicated settings view.
 
 ---
 
