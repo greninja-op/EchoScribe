@@ -806,6 +806,29 @@ h2.display-serif { font-size: 20px; line-height: 1.4; }
   color: var(--text-primary);
 }
 
+/* Engine Selector & Indicator */
+.engine-select {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-family: var(--font-sans);
+  padding: 3px 6px;
+  outline: none;
+  cursor: pointer;
+}
+
+.engine-select:hover {
+  color: var(--text-primary);
+}
+
+.context-engine-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
 /* Command Mode Inline Diff Container */
 .command-diff-container {
   max-width: 760px;

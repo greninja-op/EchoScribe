@@ -37,6 +37,12 @@
         <option value="light">Light (Stutters)</option>
         <option value="off">Off (Literal ASR)</option>
       </select>
+      <select id="transcriptionEngineSelect" class="engine-select" title="Transcription Engine">
+        <option value="auto" selected>Auto: OS Detected</option>
+        <option value="windows_local">Windows Local (Whisper)</option>
+        <option value="macos_native">macOS Native (Apple Speech)</option>
+        <option value="model_api">Model/API (Cloud / Ollama)</option>
+      </select>
       <button class="icon-nav-btn active" id="bridgeToggleBtn" title="Swarm Bridge Armed">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg>
         <span>Swarm Bridge</span>
@@ -161,6 +167,8 @@
           <span class="context-app-name" id="currentAppTarget">dictating into VS Code</span>
           <span class="context-divider">·</span>
           <span class="context-tone-name" id="currentToneLabel">Tone: Clean</span>
+          <span class="context-divider">·</span>
+          <span class="context-engine-name" id="currentEngineLabel">Engine: Windows Local</span>
           <span class="context-divider">·</span>
           <span class="context-egress" id="currentEgressLabel">0 bytes egress (Air-Gapped)</span>
         </div>

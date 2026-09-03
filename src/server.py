@@ -21,6 +21,7 @@ from pydantic import BaseModel
 from .config import STATIC_DIR, HOST, PORT, HISTORY_FILE, CLI_WORKFLOW_URL
 from .dictionary import CorrectionDictionary
 from .transcriber import TranscriberEngine
+from .transcription import select_default_engine
 from .audio_capture import AudioCapture
 from .flow_intelligence import FlowIntelligence
 
@@ -107,6 +108,10 @@ class FlowCorrectRequest(BaseModel):
 class AutoAddWatcherRequest(BaseModel):
     original_inserted: str
     current_field_text: str
+
+
+class EngineSelectRequest(BaseModel):
+    engine_id: str
 
 
 def _log_history(entry: Dict[str, Any]) -> None:
@@ -564,6 +569,36 @@ async def get_app_profiles_endpoint() -> Dict[str, Any]:
         }
     }
 
+
+@app.get("/api/transcription/engines")
+async def list_transcription_engines() -> Dict[str, Any]:
+    """List all available transcription engines, active engine, and auto-detect default."""
+    return {
+        "active_engine_id": transcriber.registry.active_engine_id,
+        "preference": transcriber.registry.preference,
+        "active_engine_name": transcriber.active_engine_name,
+        "system_default": select_default_engine(),
+        "engines": transcriber.registry.list_engines(),
+    }
+
+
+@app.post("/api/transcription/engine/select")
+async def select_transcription_engine_endpoint(req: EngineSelectRequest) -> Dict[str, Any]:
+    """Switch active transcription engine."""
+    res = transcriber.select_engine(req.engine_id)
+    return res
+
+
+@app.get("/api/transcription/ollama/status")
+async def get_ollama_status_endpoint() -> Dict[str, Any]:
+    """Probe Ollama connectivity on localhost:11434."""
+    model_api_engine = transcriber.registry.engines.get("model_api")
+    is_alive = await model_api_engine.check_ollama_alive() if model_api_engine else False
+    return {
+        "ollama_alive": is_alive,
+        "ollama_url": "http://localhost:11434",
+        "notice": "Ollama ready" if is_alive else "Ollama not detected — install from ollama.com",
+    }
 
 
 # Serve static web interface

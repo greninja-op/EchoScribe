@@ -32,6 +32,7 @@ class EchoScribeApp {
     this.toneSwitcher = document.getElementById("toneSwitcher");
     this.btnCommandMode = document.getElementById("btnCommandMode");
     this.correctionStrengthSelect = document.getElementById("correctionStrengthSelect");
+    this.transcriptionEngineSelect = document.getElementById("transcriptionEngineSelect");
     this.bridgeToggleBtn = document.getElementById("bridgeToggleBtn");
     this.openDictionaryTopBtn = document.getElementById("openDictionaryTopBtn");
     this.openPaletteBtn = document.getElementById("openPaletteBtn");
@@ -57,6 +58,7 @@ class EchoScribeApp {
     // Composer & App-Context Line
     this.currentAppTarget = document.getElementById("currentAppTarget");
     this.currentToneLabel = document.getElementById("currentToneLabel");
+    this.currentEngineLabel = document.getElementById("currentEngineLabel");
     this.currentEgressLabel = document.getElementById("currentEgressLabel");
     this.composerPill = document.getElementById("composerPill");
     this.composerMicBtn = document.getElementById("composerMicBtn");
@@ -101,6 +103,9 @@ class EchoScribeApp {
     this.btnCommandMode?.addEventListener("click", () => this.triggerCommandMode());
     this.correctionStrengthSelect?.addEventListener("change", (e) => {
       this.correctionStrength = e.target.value;
+    });
+    this.transcriptionEngineSelect?.addEventListener("change", (e) => {
+      this.switchEngine(e.target.value);
     });
     this.openDictionaryTopBtn?.addEventListener("click", () => this.openDictionaryArtifact());
     this.btnNavDictionary?.addEventListener("click", () => this.openDictionaryArtifact());
@@ -398,6 +403,38 @@ class EchoScribeApp {
         "claude code": "Claude Code"
       };
       this.loadRecentSessions();
+    }
+
+    // Load active transcription engine info
+    try {
+      const engRes = await fetch("/api/transcription/engines");
+      const engData = await engRes.json();
+      if (engData && engData.active_engine_name) {
+        if (this.currentEngineLabel) {
+          this.currentEngineLabel.innerText = `Engine: ${engData.active_engine_name}`;
+        }
+        if (this.transcriptionEngineSelect) {
+          this.transcriptionEngineSelect.value = engData.preference || "auto";
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load transcription engine status:", e);
+    }
+  }
+
+  async switchEngine(engineId) {
+    try {
+      const res = await fetch("/api/transcription/engine/select", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ engine_id: engineId })
+      });
+      const data = await res.json();
+      if (data.success && this.currentEngineLabel) {
+        this.currentEngineLabel.innerText = `Engine: ${data.display_name}`;
+      }
+    } catch (e) {
+      console.warn("Failed to switch engine:", e);
     }
   }
 
