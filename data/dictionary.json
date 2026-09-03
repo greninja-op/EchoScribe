@@ -5,43 +5,43 @@
       "replacement": "FastAPI",
       "category": "auto-learned",
       "added_via": "auto",
-      "first_seen": 1788421959.8703883
+      "first_seen": 1788423126.4159062
     },
     "fastapi": {
       "replacement": "FastAPI",
       "category": "code",
       "added_via": "manual",
-      "usage_count": 11
+      "usage_count": 14
     },
     "docker compose": {
       "replacement": "docker-compose",
       "category": "code",
       "added_via": "manual",
-      "usage_count": 4
+      "usage_count": 5
     },
     "git hub": {
       "replacement": "GitHub",
       "category": "code",
       "added_via": "manual",
-      "usage_count": 4
+      "usage_count": 5
     },
     "github": {
       "replacement": "GitHub",
       "category": "code",
       "added_via": "manual",
-      "usage_count": 4
+      "usage_count": 5
     },
     "open ai": {
       "replacement": "OpenAI",
       "category": "code",
       "added_via": "manual",
-      "usage_count": 4
+      "usage_count": 5
     },
     "openai": {
       "replacement": "OpenAI",
       "category": "code",
       "added_via": "manual",
-      "usage_count": 4
+      "usage_count": 5
     },
     "supabase": {
       "replacement": "Supabase",
