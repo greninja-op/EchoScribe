@@ -21,7 +21,8 @@
 
     <div class="topbar-right">
       <button class="icon-nav-btn" id="btnCommandMode" title="Command Mode: Voice-driven edit of selected text (Alt+C)">
-        <span>⚡ Command Mode</span>
+        <svg class="lightning-outline-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#E5A93C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        <span>Command Mode</span>
         <kbd class="kbd-meta">Alt+C</kbd>
       </button>
       <button class="icon-nav-btn active" id="bridgeToggleBtn" title="Swarm Bridge Armed">
@@ -115,7 +116,10 @@
         <!-- Command Mode Inline Diff Preview (Wispr Flow Edit Review) -->
         <div class="command-diff-container" id="commandDiffContainer" style="display: none;">
           <div class="command-diff-header">
-            <span class="diff-title-badge">⚡ Command Edit Diff</span>
+            <span class="diff-title-badge">
+              <svg class="lightning-outline-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#E5A93C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span>Command Edit Diff</span>
+            </span>
             <div class="diff-actions">
               <button type="button" class="diff-action-btn cancel" id="btnDiscardCommand">Discard</button>
               <button type="button" class="diff-action-btn accept" id="btnAcceptCommand">Accept Edit</button>
