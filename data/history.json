@@ -1,49 +1,21 @@
 [
   {
     "success": true,
-    "transcript": "Create a FastAPI router with async/await and push to GitHub.",
-    "raw_transcript": "create a fast api router with async await and push to git hub",
-    "replacements": [
-      {
-        "from": "async await",
-        "to": "async/await",
-        "type": "dictionary"
-      },
-      {
-        "from": "fast api",
-        "to": "FastAPI",
-        "type": "dictionary"
-      },
-      {
-        "from": "FastAPI",
-        "to": "FastAPI",
-        "type": "dictionary"
-      },
-      {
-        "from": "git hub",
-        "to": "GitHub",
-        "type": "dictionary"
-      },
-      {
-        "from": "GitHub",
-        "to": "GitHub",
-        "type": "dictionary"
-      }
-    ],
+    "transcript": "",
+    "raw_transcript": "",
+    "replacements": [],
     "tone": "clean",
-    "engine": "simulated-local (air-gapped)",
-    "latency_ms": 10,
+    "engine": "Windows Local (base.en)",
+    "latency_ms": 0.0,
     "in_place_edit_applied": false,
     "intent_prediction": {
       "intent_feature_active": true,
-      "inferred_intent": "code_definition",
-      "confidence": 0.96,
-      "adapted_text": "Create a FastAPI router with async/await and push to GitHub.",
-      "auto_actions": [
-        "Formatted identifier syntax & enclosed keywords"
-      ],
+      "inferred_intent": "general_note",
+      "confidence": 0.88,
+      "adapted_text": "",
+      "auto_actions": [],
       "voice_twin_adaptation": "Profile synced with user developer patterns."
     },
-    "timestamp": 1788414175.5771618
+    "timestamp": 1788415523.6167414
   }
 ]
