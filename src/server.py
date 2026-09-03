@@ -380,6 +380,7 @@ async def apply_dictionary_to_text(req: TextProcessRequest) -> Dict[str, Any]:
 
 
 @app.get("/api/dictionary")
+@app.get("/api/dictionary/entries")
 async def get_dictionary() -> Dict[str, Any]:
     """List all custom dictionary words, category breakdown, and patterns."""
     return dictionary.get_all()
