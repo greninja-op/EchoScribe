@@ -1,0 +1,6 @@
+{
+  "preferred_engine": "piper",
+  "active_piper_voice": "en_US-lessac-medium",
+  "active_deepgram_voice": "aura-asteria-en",
+  "auto_fallback": true
+}

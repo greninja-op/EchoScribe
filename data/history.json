@@ -6,7 +6,7 @@
     "replacements": [],
     "tone": "clean",
     "engine": "Windows Local (base.en)",
-    "latency_ms": 0.0,
+    "latency_ms": 0.1,
     "in_place_edit_applied": false,
     "intent_prediction": {
       "intent_feature_active": true,
@@ -16,6 +16,6 @@
       "auto_actions": [],
       "voice_twin_adaptation": "Profile synced with user developer patterns."
     },
-    "timestamp": 1788460789.657857
+    "timestamp": 1788512293.0052903
   }
 ]

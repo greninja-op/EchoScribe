@@ -87,6 +87,11 @@ class EchoScribeApp {
     // Command Palette Modal
     this.paletteOverlay = document.getElementById("paletteOverlay");
     this.paletteSearchInput = document.getElementById("paletteSearchInput");
+
+    // Talkback TTS Audio Player
+    this.talkbackAudioPlayer = document.getElementById("talkbackAudioPlayer") || new Audio();
+    this.ttsStatus = null;
+    this.ttsVoices = null;
   }
 
   initEvents() {
@@ -583,6 +588,133 @@ class EchoScribeApp {
     }
   }
 
+  showFallbackToast(message) {
+    const existing = document.querySelector(".tts-fallback-toast");
+    if (existing) existing.remove();
+
+    const toast = document.createElement("div");
+    toast.className = "tts-fallback-toast";
+    toast.innerHTML = `<span class="dot">●</span> <span>${this.escapeHtml(message)}</span>`;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transition = "opacity 0.5s ease";
+      setTimeout(() => toast.remove(), 500);
+    }, 4500);
+  }
+
+  async playAudioBlob(blob) {
+    try {
+      const url = URL.createObjectURL(blob);
+      this.talkbackAudioPlayer.src = url;
+      await this.talkbackAudioPlayer.play();
+      this.talkbackAudioPlayer.onended = () => URL.revokeObjectURL(url);
+    } catch (e) {
+      console.warn("Audio playback error:", e);
+    }
+  }
+
+  async speakTalkback(text, engineOverride = null, voiceId = null) {
+    if (!text || !text.trim()) return;
+    try {
+      const resp = await fetch("/api/tts/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: text.trim(),
+          engine: engineOverride,
+          voice_id: voiceId,
+        }),
+      });
+
+      if (!resp.ok) {
+        throw new Error(`TTS HTTP error: ${resp.status}`);
+      }
+
+      const engineUsed = resp.headers.get("X-TTS-Engine") || "piper";
+      const fallbackTriggered = resp.headers.get("X-TTS-Fallback") === "true";
+      const fallbackReason = resp.headers.get("X-TTS-Fallback-Reason");
+
+      if (fallbackTriggered) {
+        this.showFallbackToast("Deepgram unavailable — using local Piper");
+      }
+
+      const blob = await resp.blob();
+      await this.playAudioBlob(blob);
+    } catch (err) {
+      console.error("Talkback speech synthesis failed:", err);
+    }
+  }
+
+  async previewVoice(engine, voiceId, btnEl) {
+    if (btnEl) {
+      btnEl.classList.add("playing");
+      btnEl.innerHTML = `<span>▶ Speaking...</span>`;
+    }
+
+    try {
+      const resp = await fetch("/api/tts/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: "Hello, this is an audition preview from Kelvra Voice.",
+          engine: engine,
+          voice_id: voiceId,
+        }),
+      });
+
+      if (!resp.ok) {
+        throw new Error(`Preview error: ${resp.status}`);
+      }
+
+      const blob = await resp.blob();
+      await this.playAudioBlob(blob);
+    } catch (err) {
+      console.error("Preview voice failed:", err);
+      alert(`Could not preview voice: ${err.message}`);
+    } finally {
+      if (btnEl) {
+        btnEl.classList.remove("playing");
+        btnEl.innerHTML = `<span>Preview</span>`;
+      }
+    }
+  }
+
+  async pollPiperDownload(voiceId, itemEl) {
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/tts/piper/download/status?voice_id=${encodeURIComponent(voiceId)}`);
+        const data = await res.json();
+        const actionContainer = itemEl.querySelector(".tts-voice-actions");
+        if (data.status === "ready" || data.downloaded) {
+          clearInterval(pollInterval);
+          if (actionContainer) {
+            actionContainer.innerHTML = `
+              <span class="tts-status-badge connected">Ready</span>
+              <button type="button" class="tts-btn-preview" data-engine="piper" data-voice="${voiceId}">
+                <span>Preview</span>
+              </button>
+            `;
+            const prevBtn = actionContainer.querySelector(".tts-btn-preview");
+            prevBtn?.addEventListener("click", () => this.previewVoice("piper", voiceId, prevBtn));
+          }
+          // Refresh voice dropdowns
+          await this.renderSettingsContent();
+        } else if (data.status === "error") {
+          clearInterval(pollInterval);
+          if (actionContainer) {
+            actionContainer.innerHTML = `<span class="tts-status-badge fallback" title="${data.error || 'Failed'}">Error</span>`;
+          }
+        } else {
+          const btn = actionContainer.querySelector(".tts-btn-download");
+          if (btn) btn.innerText = `Downloading ${data.progress || 0}%...`;
+        }
+      } catch (e) {
+        clearInterval(pollInterval);
+      }
+    }, 1500);
+  }
+
   async renderSettingsContent() {
     // Enumerate audio input devices
     let audioDeviceOptions = `<option value="default">Default System Microphone</option>`;
@@ -602,6 +734,74 @@ class EchoScribeApp {
       console.debug("Could not enumerate audio devices:", e);
     }
 
+    // Fetch TTS status and voice catalog
+    let ttsStatus = { preferred_engine: "piper", effective_engine: "piper", fallback_active: false, piper: { available: true, active_voice: "en_US-lessac-medium" }, deepgram: { available: false, masked_key: "" } };
+    let ttsVoices = { preferred_engine: "piper", piper: { active_voice: "en_US-lessac-medium", voices: [] }, deepgram: { active_voice: "aura-asteria-en", voices: [] } };
+
+    try {
+      const [sRes, vRes] = await Promise.all([
+        fetch("/api/tts/status"),
+        fetch("/api/tts/voices"),
+      ]);
+      if (sRes.ok) ttsStatus = await sRes.json();
+      if (vRes.ok) ttsVoices = await vRes.json();
+      this.ttsStatus = ttsStatus;
+      this.ttsVoices = ttsVoices;
+    } catch (e) {
+      console.debug("Could not fetch TTS configuration:", e);
+    }
+
+    const preferredEngine = ttsStatus.preferred_engine || "piper";
+    const piperActiveVoice = ttsVoices.piper?.active_voice || "en_US-lessac-medium";
+    const deepgramActiveVoice = ttsVoices.deepgram?.active_voice || "aura-asteria-en";
+    const dgHasKey = ttsStatus.deepgram?.has_key;
+    const dgMaskedKey = ttsStatus.deepgram?.masked_key || "";
+
+    // Build status badge
+    let ttsStatusBadge = `<span class="tts-status-badge">● Piper Local (Air-Gapped)</span>`;
+    if (preferredEngine === "deepgram") {
+      if (dgHasKey) {
+        ttsStatusBadge = `<span class="tts-status-badge connected">● Deepgram Connected</span>`;
+      } else {
+        ttsStatusBadge = `<span class="tts-status-badge fallback">▲ Fallback to Piper Active</span>`;
+      }
+    }
+
+    // Build Piper voice options for select
+    const piperVoiceOptions = (ttsVoices.piper?.voices || []).map((v) => {
+      const isSel = v.id === piperActiveVoice ? "selected" : "";
+      const dlBadge = v.downloaded ? "✓ " : "";
+      return `<option value="${v.id}" ${isSel}>${dlBadge}${this.escapeHtml(v.name)}</option>`;
+    }).join("");
+
+    // Build Piper voice catalog rows
+    const piperCatalogRows = (ttsVoices.piper?.voices || []).map((v) => {
+      const isDownloaded = v.downloaded;
+      const isCurrentActive = v.id === piperActiveVoice;
+      return `
+        <div class="tts-voice-item ${isCurrentActive ? 'active' : ''}" data-voice-id="${v.id}">
+          <div class="tts-voice-info">
+            <span class="tts-voice-name">${this.escapeHtml(v.name)} ${isCurrentActive ? '<span style="color:var(--accent-coral); font-size:10px;">(Active)</span>' : ''}</span>
+            <span class="tts-voice-meta">${v.language} · ${v.gender} · ~${v.size_mb} MB</span>
+          </div>
+          <div class="tts-voice-actions">
+            ${isDownloaded 
+              ? `<span class="tts-status-badge connected">Ready</span>` 
+              : `<button type="button" class="tts-btn-download" data-voice="${v.id}">Download</button>`}
+            <button type="button" class="tts-btn-preview" data-engine="piper" data-voice="${v.id}" title="Audition this voice">
+              <span>Preview</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    // Build Deepgram Aura voice options
+    const deepgramVoiceOptions = (ttsVoices.deepgram?.voices || []).map((v) => {
+      const isSel = v.id === deepgramActiveVoice ? "selected" : "";
+      return `<option value="${v.id}" ${isSel}>${this.escapeHtml(v.name)}</option>`;
+    }).join("");
+
     const html = `
       <div class="settings-view-container">
         <!-- Audio Input Device -->
@@ -620,7 +820,7 @@ class EchoScribeApp {
         <!-- Transcription Engine Selection -->
         <div class="settings-card">
           <div class="settings-card-header">
-            <span class="settings-card-label">Transcription Engine</span>
+            <span class="settings-card-label">Transcription Engine (STT)</span>
           </div>
           <p class="settings-card-desc">Choose between local on-device Whisper, macOS Native Speech, or cloud Model API.</p>
           <div class="settings-card-control">
@@ -630,6 +830,83 @@ class EchoScribeApp {
               <option value="macos_native" ${this.activeEngineId === "macos_native" ? "selected" : ""}>macOS Native (Apple Speech.framework)</option>
               <option value="model_api" ${this.activeEngineId === "model_api" ? "selected" : ""}>Model/API (Cloud Whisper / Local Ollama)</option>
             </select>
+          </div>
+        </div>
+
+        <!-- Talkback Speech Output (TTS Engine) Card -->
+        <div class="settings-card">
+          <div class="settings-card-header">
+            <span class="settings-card-label">Talkback Audio Output (TTS Engine)</span>
+            ${ttsStatusBadge}
+          </div>
+          <p class="settings-card-desc">Local-first synthesis with automatic fallback. Piper requires zero GPU and runs air-gapped.</p>
+          
+          <div class="tts-engine-toggle-row">
+            <div class="tts-engine-option ${preferredEngine === 'piper' ? 'active' : ''}" data-engine="piper" id="ttsOptionPiper">
+              <div class="tts-engine-title">
+                <span>Piper (Local)</span>
+                <span class="coral-chip" style="font-size: 10px;">Air-Gapped</span>
+              </div>
+              <span class="tts-engine-sub">Zero GPU, zero network egress. Real-time CPU neural synthesis.</span>
+            </div>
+            <div class="tts-engine-option ${preferredEngine === 'deepgram' ? 'active' : ''}" data-engine="deepgram" id="ttsOptionDeepgram">
+              <div class="tts-engine-title">
+                <span>Deepgram (Cloud)</span>
+                <span style="font-size: 10px; color: var(--color-success); font-family: var(--font-mono);">Aura-2</span>
+              </div>
+              <span class="tts-engine-sub">Ultra low-latency streaming cloud TTS ($200 free credit).</span>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:11px; color:var(--text-tertiary);">Audition talkback synthesis:</span>
+            <button type="button" class="tts-btn-preview" id="btnTestActiveTTS">
+              <span>▶ Audition Speech</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Piper Local Voice Settings Card -->
+        <div class="settings-card" id="cardPiperSettings">
+          <div class="settings-card-header">
+            <span class="settings-card-label">Piper Voice Models</span>
+            <span class="coral-chip" style="font-size: 10px;">On-Device Cache</span>
+          </div>
+          <p class="settings-card-desc">Select active persona or download additional voices from Piper's neural catalog.</p>
+          <div class="settings-card-control">
+            <select class="settings-field-select" id="settingPiperVoice">
+              ${piperVoiceOptions}
+            </select>
+          </div>
+
+          <div class="tts-voice-list">
+            ${piperCatalogRows}
+          </div>
+        </div>
+
+        <!-- Deepgram Cloud Settings Card -->
+        <div class="settings-card" id="cardDeepgramSettings">
+          <div class="settings-card-header">
+            <span class="settings-card-label">Deepgram Cloud Integration</span>
+            <span style="font-size:10px; font-family:var(--font-mono); color:var(--text-tertiary);">OS Keyring</span>
+          </div>
+          <p class="settings-card-desc">Sign up at deepgram.com, verify account, and generate an API key with $200 free credits.</p>
+          
+          <div class="settings-card-control">
+            <label style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:4px;">Aura Voice Model</label>
+            <select class="settings-field-select" id="settingDeepgramVoice">
+              ${deepgramVoiceOptions}
+            </select>
+          </div>
+
+          <div class="settings-card-control" style="margin-top:6px;">
+            <label style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:4px;">Deepgram API Key</label>
+            <div class="tts-key-input-row">
+              <input type="password" class="tts-key-input" id="inputDeepgramKey" placeholder="${dgMaskedKey ? 'Key saved: ' + dgMaskedKey : 'Enter API key (dg-...)'}" />
+              <button type="button" class="tts-key-save-btn" id="btnSaveDeepgramKey">Test & Save</button>
+              ${dgHasKey ? `<button type="button" class="tts-key-remove-btn" id="btnRemoveDeepgramKey" title="Remove Key">✕</button>` : ''}
+            </div>
+            <div id="deepgramKeyNotice" style="font-size:11px; margin-top:4px; color:var(--text-secondary);"></div>
           </div>
         </div>
 
@@ -674,7 +951,7 @@ class EchoScribeApp {
 
     this.artifactContentBody.innerHTML = html;
 
-    // Bind Settings View Controls
+    // Bind Existing Settings View Controls
     const deviceSelect = this.artifactContentBody.querySelector("#settingAudioDevice");
     deviceSelect?.addEventListener("change", (e) => {
       this.selectedAudioDeviceId = e.target.value;
@@ -702,9 +979,140 @@ class EchoScribeApp {
         await fetch("/api/config/local-only", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ enabled })
+          body: JSON.stringify({ enabled }),
         });
       } catch (err) {}
+    });
+
+    // --- Bind Talkback TTS Controls ---
+    // Engine Selection Toggle
+    const optPiper = this.artifactContentBody.querySelector("#ttsOptionPiper");
+    const optDeepgram = this.artifactContentBody.querySelector("#ttsOptionDeepgram");
+
+    const setEngineChoice = async (eng) => {
+      try {
+        await fetch("/api/tts/engine/select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ engine: eng }),
+        });
+        await this.renderSettingsContent();
+      } catch (e) {
+        console.error("Failed to set TTS engine:", e);
+      }
+    };
+
+    optPiper?.addEventListener("click", () => setEngineChoice("piper"));
+    optDeepgram?.addEventListener("click", () => setEngineChoice("deepgram"));
+
+    // Active Piper Voice Dropdown
+    const piperVoiceSelect = this.artifactContentBody.querySelector("#settingPiperVoice");
+    piperVoiceSelect?.addEventListener("change", async (e) => {
+      try {
+        await fetch("/api/tts/voice/select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ engine: "piper", voice_id: e.target.value }),
+        });
+        await this.renderSettingsContent();
+      } catch (err) {
+        console.error("Failed to select Piper voice:", err);
+      }
+    });
+
+    // Piper Catalog Downloads
+    this.artifactContentBody.querySelectorAll(".tts-btn-download").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const voiceId = btn.getAttribute("data-voice");
+        btn.disabled = true;
+        btn.innerText = "Downloading...";
+        try {
+          await fetch("/api/tts/piper/download", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ voice_id: voiceId }),
+          });
+          const itemEl = btn.closest(".tts-voice-item");
+          if (itemEl) this.pollPiperDownload(voiceId, itemEl);
+        } catch (err) {
+          btn.disabled = false;
+          btn.innerText = "Download Failed";
+        }
+      });
+    });
+
+    // Voice Audition / Preview Buttons
+    this.artifactContentBody.querySelectorAll(".tts-btn-preview").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const eng = btn.getAttribute("data-engine");
+        const vId = btn.getAttribute("data-voice");
+        this.previewVoice(eng, vId, btn);
+      });
+    });
+
+    // Audition Active Engine Speech Button
+    const btnTestActive = this.artifactContentBody.querySelector("#btnTestActiveTTS");
+    btnTestActive?.addEventListener("click", () => {
+      this.speakTalkback("Talkback voice output is ready and configured.", null, null);
+    });
+
+    // Deepgram Voice Dropdown
+    const dgVoiceSelect = this.artifactContentBody.querySelector("#settingDeepgramVoice");
+    dgVoiceSelect?.addEventListener("change", async (e) => {
+      try {
+        await fetch("/api/tts/voice/select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ engine: "deepgram", voice_id: e.target.value }),
+        });
+      } catch (err) {
+        console.error("Failed to select Deepgram voice:", err);
+      }
+    });
+
+    // Deepgram Key Save & Validate
+    const btnSaveKey = this.artifactContentBody.querySelector("#btnSaveDeepgramKey");
+    const inputKey = this.artifactContentBody.querySelector("#inputDeepgramKey");
+    const keyNotice = this.artifactContentBody.querySelector("#deepgramKeyNotice");
+
+    btnSaveKey?.addEventListener("click", async () => {
+      const keyVal = inputKey ? inputKey.value.trim() : "";
+      if (!keyVal) {
+        if (keyNotice) keyNotice.innerHTML = `<span style="color:var(--error);">Please enter an API key.</span>`;
+        return;
+      }
+      btnSaveKey.disabled = true;
+      btnSaveKey.innerText = "Validating...";
+      try {
+        const resp = await fetch("/api/tts/deepgram/key", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ api_key: keyVal, do_validate: true }),
+        });
+        const data = await resp.json();
+        if (data.success) {
+          await this.renderSettingsContent();
+        } else {
+          btnSaveKey.disabled = false;
+          btnSaveKey.innerText = "Test & Save";
+          if (keyNotice) keyNotice.innerHTML = `<span style="color:var(--error);">${this.escapeHtml(data.message)}</span>`;
+        }
+      } catch (err) {
+        btnSaveKey.disabled = false;
+        btnSaveKey.innerText = "Test & Save";
+        if (keyNotice) keyNotice.innerHTML = `<span style="color:var(--error);">${this.escapeHtml(err.message)}</span>`;
+      }
+    });
+
+    // Deepgram Key Remove
+    const btnRemoveKey = this.artifactContentBody.querySelector("#btnRemoveDeepgramKey");
+    btnRemoveKey?.addEventListener("click", async () => {
+      try {
+        await fetch("/api/tts/deepgram/key", { method: "DELETE" });
+        await this.renderSettingsContent();
+      } catch (err) {
+        console.error("Failed to remove key:", err);
+      }
     });
   }
 

@@ -7,5 +7,7 @@ numpy>=1.24.0
 soundfile>=0.12.1
 aiofiles>=23.2.0
 pytest>=8.0.0
+piper-tts>=1.2.0
+keyring>=24.0.0
 # Optional on-device STT engine:
 # sherpa-onnx>=1.10.0

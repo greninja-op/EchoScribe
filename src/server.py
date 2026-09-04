@@ -15,16 +15,17 @@ from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from pydantic import BaseModel
 
-from .config import STATIC_DIR, HOST, PORT, HISTORY_FILE, CLI_WORKFLOW_URL
+from .config import STATIC_DIR, HOST, PORT, HISTORY_FILE, CLI_WORKFLOW_URL, DATA_DIR, LOCAL_PIPER_DIR
 from .dictionary import CorrectionDictionary
 from .transcriber import TranscriberEngine
 from .transcription import select_default_engine
 from .audio_capture import AudioCapture
 from .flow_intelligence import FlowIntelligence
 from .db import db
+from .tts import TTSManager
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("echoscribe.server")
@@ -49,6 +50,7 @@ dictionary = CorrectionDictionary()
 transcriber = TranscriberEngine()
 audio_capture = AudioCapture()
 flow_intel = FlowIntelligence()
+tts_manager = TTSManager(data_dir=DATA_DIR, models_dir=LOCAL_PIPER_DIR)
 
 # In-memory history buffer
 history_log: List[Dict[str, Any]] = []
@@ -113,6 +115,30 @@ class AutoAddWatcherRequest(BaseModel):
 
 class EngineSelectRequest(BaseModel):
     engine_id: str
+
+
+class TTSSpeakRequest(BaseModel):
+    text: str
+    engine: Optional[str] = None
+    voice_id: Optional[str] = None
+
+
+class TTSEngineSelectRequest(BaseModel):
+    engine: str
+
+
+class TTSVoiceSelectRequest(BaseModel):
+    engine: str
+    voice_id: str
+
+
+class TTSPiperDownloadRequest(BaseModel):
+    voice_id: str
+
+
+class TTSDeepgramKeyRequest(BaseModel):
+    api_key: str
+    do_validate: bool = True
 
 
 def _log_history(entry: Dict[str, Any]) -> None:
@@ -637,6 +663,151 @@ async def get_stats_endpoint() -> Dict[str, Any]:
     except Exception as e:
         logger.warning(f"Could not retrieve stats: {e}")
         return {"total_words": 0, "total_duration_seconds": 0.0, "wpm": 145, "hours_saved": 0.0}
+
+
+# --- Talkback TTS Endpoints (Piper & Deepgram) ---
+
+@app.post("/api/tts/speak")
+async def tts_speak_endpoint(req: TTSSpeakRequest):
+    """Synthesize speech audio for Talkback response with cloud-to-local fallback."""
+    if not req.text.strip():
+        raise HTTPException(status_code=400, detail="Speech text cannot be empty.")
+    try:
+        audio_bytes, meta = await tts_manager.synthesize(
+            req.text,
+            engine_override=req.engine,
+            voice_id=req.voice_id,
+        )
+        headers = {
+            "X-TTS-Engine": meta["engine_used"],
+            "X-TTS-Fallback": str(meta["fallback_triggered"]).lower(),
+            "X-TTS-Fallback-Reason": meta.get("fallback_reason") or "",
+            "X-TTS-Latency-Ms": str(meta["latency_ms"]),
+            "X-TTS-Voice": meta["voice_id"],
+            "Access-Control-Expose-Headers": "X-TTS-Engine, X-TTS-Fallback, X-TTS-Fallback-Reason, X-TTS-Latency-Ms, X-TTS-Voice",
+        }
+        return Response(content=audio_bytes, media_type="audio/wav", headers=headers)
+    except Exception as e:
+        logger.error(f"TTS synthesis endpoint error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/tts/status")
+async def tts_status_endpoint() -> Dict[str, Any]:
+    """Get runtime status, active engines, fallback state, and masked credentials."""
+    return tts_manager.get_status()
+
+
+@app.post("/api/tts/engine/select")
+async def tts_select_engine_endpoint(req: TTSEngineSelectRequest) -> Dict[str, Any]:
+    """Switch preferred engine ('piper' or 'deepgram')."""
+    try:
+        return tts_manager.select_engine(req.engine)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/tts/voice/select")
+async def tts_select_voice_endpoint(req: TTSVoiceSelectRequest) -> Dict[str, Any]:
+    """Switch active voice for given engine."""
+    try:
+        return tts_manager.select_voice(req.engine, req.voice_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/tts/voices")
+async def tts_voices_endpoint() -> Dict[str, Any]:
+    """List available voices for Piper and Deepgram."""
+    return {
+        "preferred_engine": tts_manager.preferred_engine,
+        "piper": {
+            "active_voice": tts_manager.active_piper_voice,
+            "voices": tts_manager.piper.get_available_voices(),
+        },
+        "deepgram": {
+            "active_voice": tts_manager.active_deepgram_voice,
+            "voices": tts_manager.deepgram.get_available_voices(),
+        },
+    }
+
+
+@app.post("/api/tts/piper/download")
+async def tts_piper_download_endpoint(req: TTSPiperDownloadRequest) -> Dict[str, Any]:
+    """Initiate background download of a Piper voice model."""
+    asyncio.create_task(tts_manager.piper.download_voice(req.voice_id))
+    return {"success": True, "voice_id": req.voice_id, "status": "downloading"}
+
+
+@app.get("/api/tts/piper/download/status")
+async def tts_piper_download_status_endpoint(voice_id: str) -> Dict[str, Any]:
+    """Get download progress for a Piper voice."""
+    return tts_manager.piper.get_download_status(voice_id)
+
+
+@app.post("/api/tts/deepgram/key")
+async def tts_deepgram_key_endpoint(req: TTSDeepgramKeyRequest) -> Dict[str, Any]:
+    """Store Deepgram API key in OS Keyring with validation."""
+    key = req.api_key.strip()
+    if not key:
+        tts_manager.vault.delete_key("deepgram")
+        return {"success": True, "masked_key": "", "message": "Deepgram API key removed."}
+
+    is_valid = True
+    message = "Key saved successfully."
+    meta = None
+
+    if req.do_validate:
+        is_valid, message, meta = await tts_manager.deepgram.validate_key(key)
+        if not is_valid:
+            return {
+                "success": False,
+                "message": message,
+                "masked_key": tts_manager.vault.get_masked_key("deepgram"),
+            }
+
+    tts_manager.vault.set_key("deepgram", key)
+    return {
+        "success": True,
+        "message": message,
+        "masked_key": tts_manager.vault.get_masked_key("deepgram"),
+        "meta": meta,
+    }
+
+
+@app.delete("/api/tts/deepgram/key")
+async def tts_deepgram_delete_key_endpoint() -> Dict[str, Any]:
+    """Remove Deepgram API key from OS Keyring."""
+    tts_manager.vault.delete_key("deepgram")
+    return {"success": True, "message": "Deepgram API key removed."}
+
+
+@app.post("/api/tts/deepgram/validate")
+async def tts_deepgram_validate_endpoint() -> Dict[str, Any]:
+    """Test currently stored Deepgram API key."""
+    is_valid, message, meta = await tts_manager.deepgram.validate_key()
+    return {"valid": is_valid, "message": message, "meta": meta}
+
+
+@app.post("/api/tts/preview")
+async def tts_preview_endpoint(req: TTSSpeakRequest):
+    """Generate audio sample preview for voice auditioning."""
+    sample_text = req.text if (req.text and req.text.strip()) else "Hello, this is a voice preview from Kelvra Talkback."
+    try:
+        audio_bytes, meta = await tts_manager.synthesize(
+            sample_text,
+            engine_override=req.engine,
+            voice_id=req.voice_id,
+        )
+        headers = {
+            "X-TTS-Engine": meta["engine_used"],
+            "X-TTS-Voice": meta["voice_id"],
+            "Access-Control-Expose-Headers": "X-TTS-Engine, X-TTS-Voice",
+        }
+        return Response(content=audio_bytes, media_type="audio/wav", headers=headers)
+    except Exception as e:
+        logger.error(f"TTS preview endpoint error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Serve static web interface

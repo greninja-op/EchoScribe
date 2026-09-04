@@ -32,3 +32,12 @@ LOCAL_PARAKEET_DIR = os.getenv(
     "ECHOSCRIBE_MODEL_DIR",
     os.path.expandvars(r"%LOCALAPPDATA%\Murmur\models\parakeet-v2")
 )
+
+# TTS & Voice Synthesis Configuration
+TTS_CONFIG_FILE = DATA_DIR / "tts_config.json"
+LOCAL_PIPER_DIR = os.getenv(
+    "KELVRA_PIPER_DIR",
+    os.path.expandvars(r"%LOCALAPPDATA%\Murmur\models\piper")
+)
+DEFAULT_PIPER_VOICE = "en_US-lessac-medium"
+DEFAULT_DEEPGRAM_VOICE = "aura-asteria-en"
