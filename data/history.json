@@ -16,6 +16,158 @@
       "auto_actions": [],
       "voice_twin_adaptation": "Profile synced with user developer patterns."
     },
-    "timestamp": 1788512293.0052903
+    "timestamp": 1788616545.14162
+  },
+  {
+    "success": true,
+    "transcript": "",
+    "raw_transcript": "",
+    "replacements": [],
+    "tone": "clean",
+    "engine": "Windows Local (base.en)",
+    "latency_ms": 1.2,
+    "in_place_edit_applied": false,
+    "intent_prediction": {
+      "intent_feature_active": true,
+      "inferred_intent": "general_note",
+      "confidence": 0.88,
+      "adapted_text": "",
+      "auto_actions": [],
+      "voice_twin_adaptation": "Profile synced with user developer patterns."
+    },
+    "timestamp": 1788616423.686761
+  },
+  {
+    "success": true,
+    "transcript": "",
+    "raw_transcript": "",
+    "replacements": [],
+    "tone": "clean",
+    "engine": "Windows Local (base.en)",
+    "latency_ms": 0.6,
+    "in_place_edit_applied": false,
+    "intent_prediction": {
+      "intent_feature_active": true,
+      "inferred_intent": "general_note",
+      "confidence": 0.88,
+      "adapted_text": "",
+      "auto_actions": [],
+      "voice_twin_adaptation": "Profile synced with user developer patterns."
+    },
+    "timestamp": 1788616075.5412564
+  },
+  {
+    "success": true,
+    "transcript": "",
+    "raw_transcript": "",
+    "replacements": [],
+    "tone": "clean",
+    "engine": "Windows Local (base.en)",
+    "latency_ms": 0.0,
+    "in_place_edit_applied": false,
+    "intent_prediction": {
+      "intent_feature_active": true,
+      "inferred_intent": "general_note",
+      "confidence": 0.88,
+      "adapted_text": "",
+      "auto_actions": [],
+      "voice_twin_adaptation": "Profile synced with user developer patterns."
+    },
+    "timestamp": 1788603235.6499214
+  },
+  {
+    "success": true,
+    "transcript": "",
+    "raw_transcript": "",
+    "replacements": [],
+    "tone": "clean",
+    "engine": "Windows Local (base.en)",
+    "latency_ms": 0.7,
+    "in_place_edit_applied": false,
+    "intent_prediction": {
+      "intent_feature_active": true,
+      "inferred_intent": "general_note",
+      "confidence": 0.88,
+      "adapted_text": "",
+      "auto_actions": [],
+      "voice_twin_adaptation": "Profile synced with user developer patterns."
+    },
+    "timestamp": 1788602366.4066594
+  },
+  {
+    "success": true,
+    "transcript": "",
+    "raw_transcript": "",
+    "replacements": [],
+    "tone": "clean",
+    "engine": "Windows Local (base.en)",
+    "latency_ms": 0.0,
+    "in_place_edit_applied": false,
+    "intent_prediction": {
+      "intent_feature_active": true,
+      "inferred_intent": "general_note",
+      "confidence": 0.88,
+      "adapted_text": "",
+      "auto_actions": [],
+      "voice_twin_adaptation": "Profile synced with user developer patterns."
+    },
+    "timestamp": 1788601476.811989
+  },
+  {
+    "success": true,
+    "transcript": "",
+    "raw_transcript": "",
+    "replacements": [],
+    "tone": "clean",
+    "engine": "Windows Local (base.en)",
+    "latency_ms": 0.8,
+    "in_place_edit_applied": false,
+    "intent_prediction": {
+      "intent_feature_active": true,
+      "inferred_intent": "general_note",
+      "confidence": 0.88,
+      "adapted_text": "",
+      "auto_actions": [],
+      "voice_twin_adaptation": "Profile synced with user developer patterns."
+    },
+    "timestamp": 1788600881.3980398
+  },
+  {
+    "success": true,
+    "transcript": "",
+    "raw_transcript": "",
+    "replacements": [],
+    "tone": "clean",
+    "engine": "Windows Local (base.en)",
+    "latency_ms": 0.0,
+    "in_place_edit_applied": false,
+    "intent_prediction": {
+      "intent_feature_active": true,
+      "inferred_intent": "general_note",
+      "confidence": 0.88,
+      "adapted_text": "",
+      "auto_actions": [],
+      "voice_twin_adaptation": "Profile synced with user developer patterns."
+    },
+    "timestamp": 1788596572.3280632
+  },
+  {
+    "success": true,
+    "transcript": "",
+    "raw_transcript": "",
+    "replacements": [],
+    "tone": "clean",
+    "engine": "Windows Local (base.en)",
+    "latency_ms": 7.6,
+    "in_place_edit_applied": false,
+    "intent_prediction": {
+      "intent_feature_active": true,
+      "inferred_intent": "general_note",
+      "confidence": 0.88,
+      "adapted_text": "",
+      "auto_actions": [],
+      "voice_twin_adaptation": "Profile synced with user developer patterns."
+    },
+    "timestamp": 1788595398.1435423
   }
 ]
